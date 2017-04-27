@@ -2,6 +2,7 @@ FORMS=\
  formula_demo.42f
 
 PROGMOD=\
+ liblexer.42m \
  libformula.42m \
  formula_demo.42m
 

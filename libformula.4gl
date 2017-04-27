@@ -3,7 +3,7 @@
 -- Numeric variables only, cannot be NULL
 
 IMPORT util
-IMPORT FGL lexer
+IMPORT FGL liblexer
 
 PUBLIC CONSTANT EE_SYNTAX_ERROR         = -999
 PUBLIC CONSTANT EE_INVALID_NUMBER       = -998
@@ -912,7 +912,7 @@ display "\nin : ", expr
           LET last_tokid = tokid
           LET last_token = token
        END IF
-       CALL lexer.getNextToken(buf,pos,TRUE) RETURNING tokid,pos,token
+       CALL liblexer.getNextToken(buf,pos,TRUE) RETURNING tokid,pos,token
 &ifdef DEBUG
 display pos, "  t=", tokid, " [", token, "]", column 50, "last: [", last_token, "]"
 &endif
@@ -934,7 +934,7 @@ display pos, "  t=", tokid, " [", token, "]", column 50, "last: [", last_token, 
            END IF
 
          WHEN SL_TOKID_IDENT
-           CALL lexer.getNextToken(buf,pos,TRUE) RETURNING tmp_tokid,tmp_pos,tmp_token
+           CALL liblexer.getNextToken(buf,pos,TRUE) RETURNING tmp_tokid,tmp_pos,tmp_token
            IF tmp_tokid==SL_TOKID_OTHER AND tmp_token==ET_LEFT_BRACE THEN
               IF NOT stack_push_function(token) THEN
                  RETURN EE_INVALID_FUNCTION
