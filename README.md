@@ -54,7 +54,14 @@ APIs:
 * getVariable(name STRING) RETURNS DECIMAL(32): Get the value of a variable.
 * clearVariable(name STRING): Get the value of a variable.
 * clearVariables(): Clear all user variables (predefined constants like Pi are kept)
-* getVariableList(varlist DYNAMIC ARRAY OF RECORD): Fills the array passed as parameter with the current list defined variables.
+* getVariableList(varlist t_varlist): Fills the array passed as parameter with the current list defined variables.
+  - t_varlist type is defined as:
+    ``
+     DYNAMIC ARRAY OF RECORD
+               name STRING,
+               value t_number
+        END RECORD
+    ``
 * evaluate(expr STRING): Evaluate the expressions passed as parameter.
   - This function returns a EE_* status and the computed value.
 * getErrorMessage(num SMALLINT): Returns a clear error message from the status of evaluate().

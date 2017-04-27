@@ -22,9 +22,8 @@ PRIVATE TYPE t_variable RECORD
                name STRING,
                value t_number
         END RECORD
-
--- Could be a util.Hash, but is not required if only a bunch of variables are used.
-PRIVATE DEFINE vars DYNAMIC ARRAY OF t_variable
+PUBLIC TYPE t_varlist DYNAMIC ARRAY OF t_variable
+PRIVATE DEFINE vars t_varlist
 
 PRIVATE CONSTANT ET_OPER_POW      = "^"
 PRIVATE CONSTANT ET_OPER_ADD      = "+"
@@ -170,7 +169,7 @@ PRIVATE FUNCTION lookup_variable(name,auto)
 END FUNCTION
 
 PUBLIC FUNCTION getVariableList(vl)
-    DEFINE vl DYNAMIC ARRAY OF t_variable
+    DEFINE vl t_varlist
     CALL vars.copyTo( vl )
 END FUNCTION
 

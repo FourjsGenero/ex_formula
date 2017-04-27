@@ -9,10 +9,7 @@ DEFINE rec RECORD
            var_value DECIMAL(32)
        END RECORD
 
-DEFINE varlist DYNAMIC ARRAY OF RECORD
-           name STRING,
-           value DECIMAL(32)
-       END RECORD
+DEFINE varlist libformula.t_varlist
 
 MAIN
 
