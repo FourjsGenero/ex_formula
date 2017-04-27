@@ -50,8 +50,10 @@ APIs:
 
 * initialize(): Module initialization function to be called before others.
 * finalize(): Module finalization function to be called when lib is no longer needed.
-* setVariable(name STRING,value DECIMAL(32)): Set a variable.
-* getVariable(name STRING) RETURNS DECIMAL(32): Get the value of a variable.
+* setVariable(name STRING,value t_number): Set a variable.
+  - t_number type is defined as:
+    `` DECIMAL(32) ``
+* getVariable(name STRING) RETURNS t_number: Get the value of a variable.
 * clearVariable(name STRING): Get the value of a variable.
 * clearVariables(): Clear all user variables (predefined constants like Pi are kept)
 * getVariableList(varlist t_varlist): Fills the array passed as parameter with the current list defined variables.
