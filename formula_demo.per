@@ -1,0 +1,31 @@
+LAYOUT (STYLE="dialog4")
+GRID
+{
+[inp                                           ]<TABLE t1           >
+[                                              ][c1    |c2          ]
+[                                              ][c1    |c2          ]
+[                                              ][c1    |c2          ]
+[                                              ][c1    |c2          ]
+[                                              ][c1    |c2          ]
+[comp                                          ]<                   >
+Status: [sta                                   ] Variable:
+Message:[msg                                   ][vn    ]=[vv        ]
+Result: [res                                   ][vset    |vclr      ]
+}
+END
+ATTRIBUTES
+TEXTEDIT inp = FORMONLY.input, STRETCH=BOTH, WANTNORETURNS;
+BUTTON comp: eval, TEXT="Compute";
+EDIT sta = FORMONLY.status, COLOR=RED;
+EDIT msg = FORMONLY.message, COLOR=RED;
+EDIT res = FORMONLY.result, COLOR=BLUE, SCROLL;
+c1 = FORMONLY.col_vn, SCROLL;
+c2 = FORMONLY.col_vv, SCROLL;
+EDIT vn = FORMONLY.var_name, SCROLL;
+EDIT vv = FORMONLY.var_value, SCROLL;
+BUTTON vset: set_variable, TEXT="Set";
+BUTTON vclr: clr_variable, TEXT="Clear";
+END
+INSTRUCTIONS
+SCREEN RECORD sr(FORMONLY.col_vn,FORMONLY.col_vv);
+END
