@@ -65,7 +65,7 @@ PRIVATE DEFINE out DYNAMIC ARRAY OF t_element
 -- Stack
 PRIVATE DEFINE stk DYNAMIC ARRAY OF t_element
 
-PRIVATE DEFINE initialized BOOLEAN
+PRIVATE DEFINE init_count SMALLINT
 
 &ifdef TEST
 
@@ -861,16 +861,18 @@ PRIVATE FUNCTION predefine_constants()
 END FUNCTION
 
 PUBLIC FUNCTION initialize()
-    IF NOT initialized THEN
-       LET initialized = TRUE
+    LET init_count = init_count+1
+    IF init_count==1 THEN
+       CALL liblexer.initialize()
        CALL predefine_constants()
     END IF
 END FUNCTION
 
 PUBLIC FUNCTION finalize()
-    IF initialized THEN
-       LET initialized = FALSE
+    LET init_count = init_count-1
+    IF init_count==0 THEN
        CALL vars.clear()
+       CALL liblexer.finalize()
     END IF
 END FUNCTION
 

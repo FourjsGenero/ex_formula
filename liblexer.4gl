@@ -1,10 +1,10 @@
 --
 -- WARNINGS
--- * supports any single-byte charset (like ISO88591)
--- * supports UTF-8 with FGL_LENGTH_SEMANTICS=CHAR
--- * identifiers can only be ASCII based ([_a-zA-Z][0-9_a-zA-Z])
+-- * Supports any single-byte charset (like ISO88591) or UTF-8 with FGL_LENGTH_SEMANTICS=CHAR
+-- * Identifiers can only be ASCII based ([_a-zA-Z][0-9_a-zA-Z])
 --
 
+PUBLIC CONSTANT SL_TOKID_END         = 100
 PUBLIC CONSTANT SL_TOKID_BLANK       = 1
 PUBLIC CONSTANT SL_TOKID_IDENT       = 2
 PUBLIC CONSTANT SL_TOKID_STRING      = 3
@@ -14,10 +14,6 @@ PUBLIC CONSTANT SL_TOKID_INV_STRING  = -1
 PUBLIC CONSTANT SL_TOKID_INV_NUMBER  = -2
 PUBLIC CONSTANT SL_TOKID_INV_IDENT   = -3
 PUBLIC CONSTANT SL_TOKID_INV_BLANK   = -4
-PUBLIC CONSTANT SL_TOKID_END         = 100
-
-PUBLIC CONSTANT SL_TOKFOUND_ERROR   = -1
-PUBLIC CONSTANT SL_TOKFOUND_WARNING = 1
 
 PUBLIC TYPE t_lexer_tokens DYNAMIC ARRAY OF RECORD
             tokid SMALLINT,
@@ -26,9 +22,13 @@ PUBLIC TYPE t_lexer_tokens DYNAMIC ARRAY OF RECORD
             action SMALLINT -- -1 stop, 1 warning ...
        END RECORD
 
+PRIVATE DEFINE init_count SMALLINT
+
 &ifdef TEST
 
 MAIN
+
+    CALL initialize()
 
     IF LENGTH("é日") != 2 THEN
        DISPLAY "ERROR: Make sure locale is UTF-8 and FGL_LENGTH_SEMANTICS=CHAR!"
@@ -39,7 +39,6 @@ MAIN
     CALL test_extract_string()
     CALL test_extract_identifier()
     CALL test_extract_blank()
-exit program
 
     DISPLAY parse_string(NULL)
     DISPLAY parse_string(" ")
@@ -59,6 +58,8 @@ exit program
     DISPLAY parse_string(" ; ")
 
     DISPLAY parse_string("SELECT * FROM tab WHERE col='abcdef' NOT NULL UNION SELECT * FROM tab")
+
+    CALL finalize()
 
     --CALL test_file("sql_samples.txt")
 
@@ -237,6 +238,16 @@ PRIVATE FUNCTION _test_extract_blank(str)
 END FUNCTION
 
 &endif
+
+#---
+
+PUBLIC FUNCTION initialize()
+    LET init_count = init_count+1
+END FUNCTION
+
+PUBLIC FUNCTION finalize()
+    LET init_count = init_count-1
+END FUNCTION
 
 #---
 

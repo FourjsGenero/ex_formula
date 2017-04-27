@@ -44,7 +44,9 @@ enabled when compiling with the -D TEST option, try:
 make test
 ``
 
-### APIs
+### libformula.4gl
+
+APIs:
 
 * initialize(): Module initialization function to be called before others.
 * finalize(): Module finalization function to be called when lib is no longer needed.
@@ -66,6 +68,35 @@ The status returned by evaluate() can take following values:
 - EE_UNDEFINED_VARIABLE
 - EE_COMP_STACK_ERROR
 - EE_DIVISION_BY_ZERO
+
+
+### liblexer.4gl
+
+WARNINGS:
+* Supports any single-byte charset (like ISO88591) or UTF-8 with FGL_LENGTH_SEMANTICS=CHAR
+* Identifiers can only be ASCII based ([_a-zA-Z][0-9_a-zA-Z])
+
+APIs:
+
+* initialize(): Module initialization function to be called before others.
+* finalize(): Module finalization function to be called when lib is no longer needed.
+* getNextToken(buf base.StringBuffer, pos INTEGER, ib BOOLEAN): Get the next token starting from pos.
+ - When last parameter is TRUE, does not consider blanks as tokens.
+ - Then function returns the tokenid, the next position and the token value.
+ - If SL_TOKID_END is returned, the scan is finished.
+
+Possible token ids are:
+
+- SL_TOKID_END
+- SL_TOKID_BLANK
+- SL_TOKID_IDENT
+- SL_TOKID_STRING
+- SL_TOKID_NUMBER
+- SL_TOKID_OTHER
+- SL_TOKID_INV_STRING
+- SL_TOKID_INV_NUMBER
+- SL_TOKID_INV_IDENT
+- SL_TOKID_INV_BLANK
 
 
 ## Bug fixes:
