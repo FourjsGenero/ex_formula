@@ -55,7 +55,8 @@ APIs:
 * clearVariable(name STRING): Get the value of a variable.
 * clearVariables(): Clear all user variables (predefined constants like Pi are kept)
 * getVariableList(varlist DYNAMIC ARRAY OF RECORD): Fills the array passed as parameter with the current list defined variables.
-* evaluate(expr STRING): Evaluate the expressions passed as parameter. This function returns a status and the computed value.
+* evaluate(expr STRING): Evaluate the expressions passed as parameter.
+  - This function returns a EE_* status and the computed value.
 * getErrorMessage(num SMALLINT): Returns a clear error message from the status of evaluate().
 
 The status returned by evaluate() can take following values:
@@ -81,9 +82,9 @@ APIs:
 * initialize(): Module initialization function to be called before others.
 * finalize(): Module finalization function to be called when lib is no longer needed.
 * getNextToken(buf base.StringBuffer, pos INTEGER, ib BOOLEAN): Get the next token starting from pos.
- - When last parameter is TRUE, does not consider blanks as tokens.
- - Then function returns the tokenid, the next position and the token value.
- - If SL_TOKID_END is returned, the scan is finished.
+  - When last parameter is TRUE, does not consider blanks as tokens.
+  - Then function returns the tokenid, the next position and the token value.
+  - If SL_TOKID_END is returned, the scan is finished.
 
 Possible token ids are:
 
