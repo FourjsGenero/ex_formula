@@ -813,10 +813,6 @@ PRIVATE FUNCTION test_eval()
 
     CALL evaluate("sin(max(x1,3)/15*0.5)") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.04999",s, s==0 AND NVL(v,0)==0.479425538604203)
-exit program
-
-
-
 
     -- Errors
 
@@ -832,6 +828,19 @@ exit program
     TEST_ASSERT_EVAL("test_evaluate.90005",s, s==EE_INVALID_OPERANDS AND v IS NULL)
     CALL evaluate("^") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.90006",s, s==EE_INVALID_OPERANDS AND v IS NULL)
+    CALL evaluate("(1+2") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90007",s, s==EE_INVALID_OPERANDS AND v IS NULL)
+    CALL evaluate("(1+2))") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90008",s, s==EE_PARENTHESES_MISMATCH AND v IS NULL)
+
+    CALL evaluate("min(1,") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90101",s, s==EE_INVALID_OPERANDS AND v IS NULL)
+    CALL evaluate("min(1,)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90102",s, s==EE_INVALID_OPERANDS AND v IS NULL)
+    CALL evaluate("min(1,2") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90103",s, s==EE_PARENTHESES_MISMATCH AND v IS NULL)
+    CALL evaluate("min(1,2))") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90104",s, s==EE_PARENTHESES_MISMATCH AND v IS NULL)
 
 END FUNCTION
 
@@ -898,7 +907,7 @@ PRIVATE FUNCTION prepare(expr)
            last_pos INTEGER, last_tokid SMALLINT, last_token STRING,
            tmp_pos INTEGER, tmp_tokid SMALLINT, tmp_token STRING,
            value t_number,
-           s BOOLEAN
+           s SMALLINT
 &ifdef DEBUG
 display "\nin : ", expr
 &endif

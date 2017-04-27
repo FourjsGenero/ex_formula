@@ -33,20 +33,16 @@ The code is based on the "shunting-yard" algorithm.
 4. Define your variables in the right panel
 5. Use the variables in a formula
 
-## Programmer's reference
+## Programmer's reference: libformula.4gl
 
 ### No-regression tests
 
 The libformula.4gl code implements non-regression tests that can be
-enabled when compiling with the -D TEST option, try:
+enabled when compiling with the -D TEST option, try: `` make test ``
 
-``
-make test
-``
+Use -D DEBUG to get output.
 
-### libformula.4gl
-
-APIs:
+### APIs:
 
 * initialize(): Module initialization function to be called before others.
 * finalize(): Module finalization function to be called when lib is no longer needed.
@@ -80,13 +76,19 @@ The status returned by evaluate() can take following values:
 - EE_DIVISION_BY_ZERO
 
 
-### liblexer.4gl
+## Programmer's reference: liblexer.4gl
 
-WARNINGS:
+### Warnings
+
 * Supports any single-byte charset (like ISO88591) or UTF-8 with FGL_LENGTH_SEMANTICS=CHAR
 * Identifiers can only be ASCII based ([_a-zA-Z][0-9_a-zA-Z])
 
-APIs:
+### No-regression tests
+
+The liblexer.4gl code implements non-regression tests that can be
+enabled when compiling with the -D TEST option, try: `` make test ``
+
+### APIs:
 
 * initialize(): Module initialization function to be called before others.
 * finalize(): Module finalization function to be called when lib is no longer needed.
