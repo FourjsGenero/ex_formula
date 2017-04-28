@@ -1,16 +1,18 @@
 LAYOUT (STYLE="dialog4")
 GRID
 {
-[inp                                           ]<TABLE t1           >
-[                                              ][c1    |c2          ]
-[                                              ][c1    |c2          ]
-[                                              ][c1    |c2          ]
-[                                              ][c1    |c2          ]
-[                                              ][c1    |c2          ]
-[comp                                          ]<                   >
-Status: [sta                                   ] Variable:
-Message:[msg                                   ][vn    ]=[vv        ]
-Result: [res                                   ][vset    |vclr      ]
+[inp                                           ]<GROUP g1             >
+[                                              ] <TABLE t1           >
+[                                              ] [c1    |c2          ]
+[                                              ] [c1    |c2          ]
+[                                              ] [c1    |c2          ]
+[                                              ] [c1    |c2          ]
+[                                              ] [c1    |c2          ]
+[                                              ] [c1    |c2          ]
+[comp                                          ] <                   >
+Status: [sta                                   ] [vn    ]=[vv        ]
+Message:[msg                                   ] [vset -:     :vclr -]
+Result: [res                                   ]<                     >
 }
 END
 ATTRIBUTES
@@ -19,6 +21,7 @@ BUTTON comp: eval, TEXT="Compute";
 EDIT sta = FORMONLY.status, COLOR=RED;
 EDIT msg = FORMONLY.message, COLOR=RED;
 EDIT res = FORMONLY.result, COLOR=BLUE, SCROLL;
+GROUP g1: group1, TEXT="Variables";
 c1 = FORMONLY.col_vn, SCROLL;
 c2 = FORMONLY.col_vv, SCROLL;
 EDIT vn = FORMONLY.var_name, SCROLL;
