@@ -69,6 +69,12 @@ PRIVATE DEFINE stk DYNAMIC ARRAY OF t_element
 
 PRIVATE DEFINE init_count SMALLINT
 
+&define ASSERT(c) \
+    IF NOT (c) THEN \
+       DISPLAY SFMT("ASSERT (%1,%2): %3",__FILE__,__LINE__,#c) \
+       EXIT PROGRAM 1 \
+    END IF
+
 &ifdef TEST
 
 &define TEST_ASSERT(msg, cond) \
@@ -390,8 +396,7 @@ PRIVATE FUNCTION eval_function(fn, reg)
         IF xr < 1 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xr] = util.Math.toRadians(reg[xr])
       OTHERWISE
-        DISPLAY SFMT("ASSERT: Invalid function name %1", fn)
-        EXIT PROGRAM 1
+        ASSERT(FALSE)
     END CASE
     RETURN 0
 END FUNCTION
@@ -483,8 +488,7 @@ PRIVATE FUNCTION eval_operator(op,reg)
          WHEN ET_OPER_DIV
            LET reg[xl] = reg[xl] / reg[xr]
          OTHERWISE
-           DISPLAY SFMT("ASSERT: Invalid operator %1", op)
-           EXIT PROGRAM 1
+           ASSERT(FALSE)
        END CASE
     CATCH
        CASE STATUS
@@ -804,6 +808,8 @@ PRIVATE FUNCTION test_eval()
     TEST_ASSERT_EVAL("test_evaluate.02009",s, s==0 AND NVL(v,0)==512.0)
     CALL evaluate("(2^3)^2") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.02009",s, s==0 AND NVL(v,0)==64.0)
+    CALL evaluate("-(3+2)-1") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.02010",s, s==0 AND NVL(v,0)==-6.0)
 
     CALL evaluate("x1+x2") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.03001",s, s==0 AND NVL(v,0)==215.0)
@@ -845,26 +851,50 @@ PRIVATE FUNCTION test_eval()
     CALL evaluate("-") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.90002",s, s==EE_SYNTAX_ERROR AND v IS NULL)
     CALL evaluate("+") RETURNING s, v
-    TEST_ASSERT_EVAL("test_evaluate.90003",s, s==EE_COMP_STACK_ERROR AND v IS NULL)
+    TEST_ASSERT_EVAL("test_evaluate.90003",s, s==EE_COMP_STACK_ERROR AND v IS NULL) -- FIXME?
     CALL evaluate("*") RETURNING s, v
-    TEST_ASSERT_EVAL("test_evaluate.90004",s, s==EE_INVALID_OPERANDS AND v IS NULL)
+    TEST_ASSERT_EVAL("test_evaluate.90004",s, s==EE_SYNTAX_ERROR AND v IS NULL)
     CALL evaluate("/") RETURNING s, v
-    TEST_ASSERT_EVAL("test_evaluate.90005",s, s==EE_INVALID_OPERANDS AND v IS NULL)
+    TEST_ASSERT_EVAL("test_evaluate.90005",s, s==EE_SYNTAX_ERROR AND v IS NULL)
     CALL evaluate("^") RETURNING s, v
-    TEST_ASSERT_EVAL("test_evaluate.90006",s, s==EE_INVALID_OPERANDS AND v IS NULL)
-    CALL evaluate("(1+2") RETURNING s, v
-    TEST_ASSERT_EVAL("test_evaluate.90007",s, s==EE_INVALID_OPERANDS AND v IS NULL)
-    CALL evaluate("(1+2))") RETURNING s, v
-    TEST_ASSERT_EVAL("test_evaluate.90008",s, s==EE_PARENTHESES_MISMATCH AND v IS NULL)
+    TEST_ASSERT_EVAL("test_evaluate.90006",s, s==EE_SYNTAX_ERROR AND v IS NULL)
 
+    CALL evaluate("(1+2") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90101",s, s==EE_PARENTHESES_MISMATCH AND v IS NULL)
+    CALL evaluate("(1+2))") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90102",s, s==EE_PARENTHESES_MISMATCH AND v IS NULL)
     CALL evaluate("min(1,") RETURNING s, v
-    TEST_ASSERT_EVAL("test_evaluate.90101",s, s==EE_INVALID_OPERANDS AND v IS NULL)
-    CALL evaluate("min(1,)") RETURNING s, v
-    TEST_ASSERT_EVAL("test_evaluate.90102",s, s==EE_INVALID_OPERANDS AND v IS NULL)
-    CALL evaluate("min(1,2") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.90103",s, s==EE_PARENTHESES_MISMATCH AND v IS NULL)
+    CALL evaluate("min(1,2") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90105",s, s==EE_PARENTHESES_MISMATCH AND v IS NULL)
     CALL evaluate("min(1,2))") RETURNING s, v
-    TEST_ASSERT_EVAL("test_evaluate.90104",s, s==EE_PARENTHESES_MISMATCH AND v IS NULL)
+    TEST_ASSERT_EVAL("test_evaluate.90106",s, s==EE_PARENTHESES_MISMATCH AND v IS NULL)
+    CALL evaluate("-(3*(4+2)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90107",s, s==EE_PARENTHESES_MISMATCH AND v IS NULL)
+
+    CALL evaluate("min(,)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90201",s, s==EE_SYNTAX_ERROR AND v IS NULL)
+    CALL evaluate("min(,,)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90202",s, s==EE_SYNTAX_ERROR AND v IS NULL)
+    CALL evaluate("min(1,)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90203",s, s==EE_SYNTAX_ERROR AND v IS NULL)
+    CALL evaluate("min(1,,)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90204",s, s==EE_SYNTAX_ERROR AND v IS NULL)
+    CALL evaluate("min(1,2,)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90205",s, s==EE_SYNTAX_ERROR AND v IS NULL)
+    CALL evaluate("min(1,max(3,2),)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90206",s, s==EE_SYNTAX_ERROR AND v IS NULL)
+    CALL evaluate("*5") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90207",s, s==EE_SYNTAX_ERROR AND v IS NULL)
+    CALL evaluate("5(*5)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90208",s, s==EE_SYNTAX_ERROR AND v IS NULL)
+    CALL evaluate("5+*5") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90209",s, s==EE_SYNTAX_ERROR AND v IS NULL)
+    CALL evaluate(")78*1 (1+3))") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90210",s, s==EE_SYNTAX_ERROR AND v IS NULL)
+    CALL evaluate("sin(*)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90211",s, s==EE_SYNTAX_ERROR AND v IS NULL)
+
 
 END FUNCTION
 
@@ -948,7 +978,7 @@ display "\nin : ", expr
        END IF
        CALL liblexer.getNextToken(buf,pos,TRUE) RETURNING tokid,pos,token
 &ifdef DEBUG
-display pos, "  t=", tokid, " [", token, "]", column 50, "last: [", last_token, "]"
+display "pos=", pos USING "##&", " tid=", tokid USING "---&", " token=[", token, "]", column 50, "last: [", last_token, "]"
 &endif
        IF tokid<0 THEN
           RETURN tokid
@@ -1001,29 +1031,33 @@ display pos, "  t=", tokid, " [", token, "]", column 50, "last: [", last_token, 
 
              WHEN token==ET_COMMA
                LET s = pop_stack_to_output_until(ET_LEFT_BRACE)
-               IF s<0 THEN
-                  RETURN EE_PARENTHESES_MISMATCH
-               END IF
+               IF s<0 THEN RETURN s END IF
 
              WHEN check_operator(token)
-               LET s = pop_operators_to_output(token)
-               IF s<0 THEN
+               IF last_token IS NULL
+               OR check_operator(last_token)
+               OR last_token==ET_LEFT_BRACE THEN
                   RETURN EE_SYNTAX_ERROR
-               ELSE
-                  LET s = stack_push_operator(token)
                END IF
+               LET s = pop_operators_to_output(token)
+               IF s<0 THEN RETURN s END IF
+               LET s = stack_push_operator(token)
 
              WHEN token==ET_LEFT_BRACE
                LET s = stack_push_control(token)
 
              WHEN token==ET_RIGHT_BRACE
-               LET s = pop_stack_to_output_until(ET_LEFT_BRACE)
-               IF s<0 THEN
-                  RETURN EE_PARENTHESES_MISMATCH
+               IF last_token IS NULL
+               OR check_operator(last_token)
+               OR last_token==ET_LEFT_BRACE
+               OR last_token==ET_COMMA THEN
+                  RETURN EE_SYNTAX_ERROR
                END IF
+               LET s = pop_stack_to_output_until(ET_LEFT_BRACE)
+               IF s<0 THEN RETURN s END IF
                CALL stack_pop_trash()
                IF stack_next_type()==ET_FUNCTION THEN
-                  LET s = pop_stack_to_output()
+                  CALL pop_stack_to_output()
                END IF
 
              OTHERWISE
@@ -1033,13 +1067,16 @@ display pos, "  t=", tokid, " [", token, "]", column 50, "last: [", last_token, 
 
        END CASE
 
+&ifdef DEBUG
+display "      output: ", util.JSON.stringify(out)
+display "      stack : ", util.JSON.stringify(stk)
+display "      --------"
+&endif
+
     END WHILE
 
-    LET s = pop_stack_to_output_until(NULL)
-
-&ifdef DEBUG
-display "out: ", util.JSON.format( util.JSON.stringify( out ) )
-&endif
+    LET s = pop_stack_to_output_to_end()
+    IF s<0 THEN RETURN s END IF
 
     RETURN 0
 
@@ -1077,33 +1114,42 @@ END FUNCTION
 
 PRIVATE FUNCTION pop_stack_to_output()
     DEFINE elem t_element
-    IF stack_next_type() IS NULL THEN
-       RETURN -1
-    ELSE
-       CALL stack_pop() RETURNING elem.*
-       CALL output_add(elem.*)
-       RETURN 0
-    END IF
+    ASSERT( stk.getLength()>0 )
+    CALL stack_pop() RETURNING elem.*
+    CALL output_add(elem.*)
 END FUNCTION
 
 PRIVATE FUNCTION pop_stack_to_output_until(stop_type)
     DEFINE stop_type t_elem_type
     DEFINE elem t_element,
-           t t_elem_type,
-           s SMALLINT
+           t t_elem_type
     WHILE TRUE
         LET t = stack_next_type()
         IF t IS NULL THEN
-           LET s = -1
-           EXIT WHILE
+           RETURN EE_PARENTHESES_MISMATCH
         END IF
-        IF stop_type IS NOT NULL AND t==stop_type THEN
+        IF t==stop_type THEN
            EXIT WHILE
         END IF
         CALL stack_pop() RETURNING elem.*
         CALL output_add(elem.*)
     END WHILE
-    RETURN s
+    RETURN 0
+END FUNCTION
+
+PRIVATE FUNCTION pop_stack_to_output_to_end()
+    DEFINE elem t_element,
+           t t_elem_type
+    LET t = stack_next_type()
+    WHILE t IS NOT NULL
+        IF t==ET_LEFT_BRACE OR t==ET_RIGHT_BRACE THEN
+           RETURN EE_PARENTHESES_MISMATCH
+        END IF
+        CALL stack_pop() RETURNING elem.*
+        CALL output_add(elem.*)
+        LET t = stack_next_type()
+    END WHILE
+    RETURN 0
 END FUNCTION
 
 PRIVATE FUNCTION left_associative(oper)
@@ -1114,9 +1160,7 @@ PRIVATE FUNCTION left_associative(oper)
       WHEN ET_OPER_SUB       RETURN TRUE
       WHEN ET_OPER_MUL       RETURN TRUE
       WHEN ET_OPER_DIV       RETURN TRUE
-      OTHERWISE
-         DISPLAY SFMT("ASSERT: left_associative('%1')",oper)
-         EXIT PROGRAM 1
+      OTHERWISE              ASSERT(FALSE)
     END CASE
 END FUNCTION
 
@@ -1129,9 +1173,7 @@ PRIVATE FUNCTION precedence_index(oper)
       WHEN ET_OPER_DIV       RETURN 3
       WHEN ET_OPER_ADD       RETURN 2
       WHEN ET_OPER_SUB       RETURN 2
-      OTHERWISE
-         DISPLAY SFMT("ASSERT: precedence_index('%1')",oper)
-         EXIT PROGRAM 1
+      OTHERWISE              ASSERT(FALSE)
     END CASE
 END FUNCTION
 
@@ -1139,7 +1181,6 @@ PRIVATE FUNCTION pop_operators_to_output(first)
     DEFINE first t_elem_type
     DEFINE t t_elem_type,
            elem t_element,
-           s SMALLINT,
            fla BOOLEAN,
            fpi SMALLINT
     LET fla = left_associative(first)
@@ -1158,5 +1199,5 @@ PRIVATE FUNCTION pop_operators_to_output(first)
            EXIT WHILE
         END IF
     END WHILE
-    RETURN s
+    RETURN 0
 END FUNCTION
