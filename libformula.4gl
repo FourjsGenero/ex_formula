@@ -14,6 +14,8 @@ PUBLIC CONSTANT EE_PARENTHESES_MISMATCH = -994
 PUBLIC CONSTANT EE_UNDEFINED_VARIABLE   = -993
 PUBLIC CONSTANT EE_COMP_STACK_ERROR     = -992
 PUBLIC CONSTANT EE_DIVISION_BY_ZERO     = -991
+PUBLIC CONSTANT EE_OPERATOR_ERROR       = -990
+PUBLIC CONSTANT EE_OVERFLOW_ERROR       = -989
 
 PRIVATE TYPE t_number DECIMAL(32)
 PRIVATE TYPE t_elem_type CHAR(1)
@@ -107,6 +109,8 @@ PUBLIC FUNCTION getErrorMessage(num)
       WHEN EE_UNDEFINED_VARIABLE   LET m="Undefined variable"
       WHEN EE_COMP_STACK_ERROR     LET m="Computing stack error"
       WHEN EE_DIVISION_BY_ZERO     LET m="Syntax error"
+      WHEN EE_OPERATOR_ERROR       LET m="Operator error"
+      WHEN EE_OVERFLOW_ERROR       LET m="Overflow error"
    END CASE
    IF num==0 THEN
       RETURN "No error"
@@ -455,32 +459,41 @@ END FUNCTION
 PRIVATE FUNCTION eval_operator(op,reg)
     DEFINE op t_elem_type,
            reg DYNAMIC ARRAY OF t_number
-    DEFINE xl,xr SMALLINT
+    DEFINE xl,xr SMALLINT,
+           r INTEGER
     LET xr = reg.getLength()
     IF xr < 2 THEN
        RETURN EE_INVALID_OPERANDS
     END IF
-    LET xl = xr-1
-    CASE op
-      WHEN ET_OPER_POW
-        LET reg[xl] = fgl_decimal_power(reg[xl],reg[xr])
-      WHEN ET_OPER_ADD
-        LET reg[xl] = reg[xl] + reg[xr]
-      WHEN ET_OPER_SUB
-        LET reg[xl] = reg[xl] - reg[xr]
-      WHEN ET_OPER_MUL
-        LET reg[xl] = reg[xl] * reg[xr]
-      WHEN ET_OPER_DIV
-        IF reg[xr] == 0 THEN
-           RETURN EE_DIVISION_BY_ZERO
-        END IF
-        LET reg[xl] = reg[xl] / reg[xr]
-      OTHERWISE
-        DISPLAY SFMT("ASSERT: Invalid operator %1", op)
-        EXIT PROGRAM 1
-    END CASE
+    TRY
+       LET xl = xr-1
+       CASE op
+         WHEN ET_OPER_POW
+           LET reg[xl] = fgl_decimal_power(reg[xl],reg[xr])
+           IF reg[xl] IS NULL THEN
+              LET r = EE_OVERFLOW_ERROR
+           END IF
+         WHEN ET_OPER_ADD
+           LET reg[xl] = reg[xl] + reg[xr]
+         WHEN ET_OPER_SUB
+           LET reg[xl] = reg[xl] - reg[xr]
+         WHEN ET_OPER_MUL
+           LET reg[xl] = reg[xl] * reg[xr]
+         WHEN ET_OPER_DIV
+           LET reg[xl] = reg[xl] / reg[xr]
+         OTHERWISE
+           DISPLAY SFMT("ASSERT: Invalid operator %1", op)
+           EXIT PROGRAM 1
+       END CASE
+    CATCH
+       CASE STATUS
+         WHEN -1202 LET r = EE_DIVISION_BY_ZERO
+         --WHEN -1226 LET r = EE_OVERFLOW_ERROR -- Impossible with DEC(32)
+         OTHERWISE  LET r = EE_OPERATOR_ERROR
+       END CASE
+    END TRY
     CALL reg.deleteElement(xr)
-    RETURN 0
+    RETURN r
 END FUNCTION
 
 #---
