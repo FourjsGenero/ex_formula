@@ -1,6 +1,7 @@
 -- Features:
 -- Case sensitive! sin()!=SIN(), Pi!=pi, ...
 -- Numeric variables only, cannot be NULL
+-- DBMONEY/DBFORMAT independent
 
 IMPORT util
 IMPORT FGL liblexer
@@ -496,6 +497,20 @@ PRIVATE FUNCTION eval_operator(op,reg)
     RETURN r
 END FUNCTION
 
+#--
+
+PRIVATE FUNCTION to_decimal(str)
+    DEFINE str STRING -- t_number
+    DEFINE dec t_number
+    -- FIXME: Missing ISO dec/str conversion in core language...
+    TRY
+        CALL util.JSON.parse(str,dec)
+    CATCH -- Conversion error
+        RETURN NULL
+    END TRY
+    RETURN dec
+END FUNCTION
+
 #---
 
 &ifdef TEST
@@ -508,8 +523,8 @@ PRIVATE FUNCTION test_output()
     CALL output_clear()
     TEST_ASSERT("test_output.01002", out.getLength()==0 )
 
-    LET r = output_add_number(111.111)
-    TEST_ASSERT("test_output.02001", r AND out[1].type = ET_VALUE AND out[1].value IS NOT NULL AND out[1].value==111.111 )
+    LET r = output_add_number(-111.111)
+    TEST_ASSERT("test_output.02001", r AND out[1].type = ET_VALUE AND out[1].value IS NOT NULL AND out[1].value==-111.111)
     LET r = output_add_operator(ET_OPER_ADD)
     TEST_ASSERT("test_output.02002", r AND out[2].type = ET_OPER_ADD AND out[2].value IS NULL)
     LET r = output_add_control(ET_LEFT_BRACE)
@@ -611,13 +626,9 @@ PRIVATE FUNCTION output_add_function(name)
 END FUNCTION
 
 PRIVATE FUNCTION output_add_number(value)
-    DEFINE value STRING -- t_number
+    DEFINE value t_number
     DEFINE elem t_element
-    TRY
-      LET elem.value = value
-    CATCH -- Conversion error
-      RETURN FALSE
-    END TRY
+    LET elem.value = value
     LET elem.type = ET_VALUE
     CALL output_add(elem.*)
     RETURN TRUE
@@ -952,8 +963,11 @@ display pos, "  t=", tokid, " [", token, "]", column 50, "last: [", last_token, 
            RETURN EE_SYNTAX_ERROR
 
          WHEN SL_TOKID_NUMBER
-           IF NOT output_add_number(token) THEN
+           LET value = to_decimal(token)
+           IF value IS NULL THEN
               RETURN EE_INVALID_NUMBER
+           ELSE
+              LET s = output_add_number(value)
            END IF
 
          WHEN SL_TOKID_IDENT

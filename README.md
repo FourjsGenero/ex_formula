@@ -7,6 +7,9 @@ arithmetical expressions using basic math functions and user variables.
 
 The code is based on the "shunting-yard" algorithm.
 
+The library is DBMONEY/DBFORMAT independent, it uses always dot as
+decimal separator.
+
 ![Simple calculator demo (GDC)](https://github.com/FourjsGenero/ex_formula/raw/master/docs/formula-screen-001.png)
 
 ## Prerequisites
@@ -39,7 +42,6 @@ The code is based on the "shunting-yard" algorithm.
 
 The libformula.4gl code implements non-regression tests that can be
 enabled when compiling with the -D TEST option, try: `` make test ``
-
 Use -D DEBUG to get output.
 
 ### APIs:
@@ -74,7 +76,6 @@ The status returned by evaluate() can take following values:
 - EE_UNDEFINED_VARIABLE
 - EE_COMP_STACK_ERROR
 - EE_DIVISION_BY_ZERO
-
 
 ## Programmer's reference: liblexer.4gl
 
