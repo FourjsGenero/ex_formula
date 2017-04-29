@@ -34,6 +34,7 @@ PRIVATE CONSTANT ET_OPER_SUB      = "-"
 PRIVATE CONSTANT ET_OPER_DIV      = "/"
 PRIVATE CONSTANT ET_OPER_MUL      = "*"
 PRIVATE CONSTANT ET_OPER_UNA_MIN  = "M"
+PRIVATE CONSTANT ET_OPER_UNA_PLS  = "P"
 PRIVATE CONSTANT ET_LEFT_BRACE    = "("
 PRIVATE CONSTANT ET_RIGHT_BRACE   = ")"
 PRIVATE CONSTANT ET_COMMA         = ","
@@ -563,6 +564,7 @@ PRIVATE FUNCTION check_operator(token)
       WHEN ET_OPER_DIV     RETURN TRUE
       WHEN ET_OPER_MUL     RETURN TRUE
       WHEN ET_OPER_UNA_MIN RETURN TRUE
+      WHEN ET_OPER_UNA_PLS RETURN TRUE
       OTHERWISE            RETURN FALSE
     END CASE
 END FUNCTION
@@ -846,18 +848,24 @@ PRIVATE FUNCTION test_eval()
 
     -- Errors
 
-    CALL evaluate("1 - ") RETURNING s, v
-    TEST_ASSERT_EVAL("test_evaluate.90001",s, s==EE_INVALID_OPERANDS AND v IS NULL)
     CALL evaluate("-") RETURNING s, v
-    TEST_ASSERT_EVAL("test_evaluate.90002",s, s==EE_SYNTAX_ERROR AND v IS NULL)
+    TEST_ASSERT_EVAL("test_evaluate.90001",s, s==EE_SYNTAX_ERROR AND v IS NULL)
     CALL evaluate("+") RETURNING s, v
-    TEST_ASSERT_EVAL("test_evaluate.90003",s, s==EE_COMP_STACK_ERROR AND v IS NULL) -- FIXME?
+    TEST_ASSERT_EVAL("test_evaluate.90002",s, s==EE_SYNTAX_ERROR AND v IS NULL)
     CALL evaluate("*") RETURNING s, v
-    TEST_ASSERT_EVAL("test_evaluate.90004",s, s==EE_SYNTAX_ERROR AND v IS NULL)
+    TEST_ASSERT_EVAL("test_evaluate.90003",s, s==EE_SYNTAX_ERROR AND v IS NULL)
     CALL evaluate("/") RETURNING s, v
-    TEST_ASSERT_EVAL("test_evaluate.90005",s, s==EE_SYNTAX_ERROR AND v IS NULL)
+    TEST_ASSERT_EVAL("test_evaluate.90004",s, s==EE_SYNTAX_ERROR AND v IS NULL)
     CALL evaluate("^") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90005",s, s==EE_SYNTAX_ERROR AND v IS NULL)
+    CALL evaluate("^1") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.90006",s, s==EE_SYNTAX_ERROR AND v IS NULL)
+    CALL evaluate("*1") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90007",s, s==EE_SYNTAX_ERROR AND v IS NULL)
+    CALL evaluate("/1") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90008",s, s==EE_SYNTAX_ERROR AND v IS NULL)
+    CALL evaluate("^%#$") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90009",s, s==EE_SYNTAX_ERROR AND v IS NULL)
 
     CALL evaluate("(1+2") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.90101",s, s==EE_PARENTHESES_MISMATCH AND v IS NULL)
@@ -895,6 +903,16 @@ PRIVATE FUNCTION test_eval()
     CALL evaluate("sin(*)") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.90211",s, s==EE_SYNTAX_ERROR AND v IS NULL)
 
+    CALL evaluate("1 - ") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90301",s, s==EE_INVALID_OPERANDS AND v IS NULL)
+    CALL evaluate("1 + ") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90302",s, s==EE_INVALID_OPERANDS AND v IS NULL)
+    CALL evaluate("1 / ") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90303",s, s==EE_INVALID_OPERANDS AND v IS NULL)
+    CALL evaluate("1 * ") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90304",s, s==EE_INVALID_OPERANDS AND v IS NULL)
+    CALL evaluate("1 ^ ") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90305",s, s==EE_INVALID_OPERANDS AND v IS NULL)
 
 END FUNCTION
 
@@ -1022,7 +1040,7 @@ display "pos=", pos USING "##&", " tid=", tokid USING "---&", " token=[", token,
               IF token=="-" THEN
                  LET s = stack_push_operator(ET_OPER_UNA_MIN)
               ELSE
-                 -- Unary plus can be ignored...
+                 LET s = stack_push_operator(ET_OPER_UNA_PLS)
               END IF
               CONTINUE WHILE
            END IF
@@ -1096,6 +1114,9 @@ PRIVATE FUNCTION compute( )
             WHEN out[x].type == ET_OPER_UNA_MIN
               IF rx<=0 THEN RETURN EE_SYNTAX_ERROR, NULL END IF
               LET reg[rx] = - reg[rx]
+            WHEN out[x].type == ET_OPER_UNA_PLS
+              IF rx<=0 THEN RETURN EE_SYNTAX_ERROR, NULL END IF
+              --LET reg[rx] = reg[rx]
             WHEN out[x].type == ET_FUNCTION
               LET r = eval_function(out[x].name, reg)
               IF r<0 THEN RETURN r, NULL END IF
@@ -1168,6 +1189,7 @@ PRIVATE FUNCTION precedence_index(oper)
     DEFINE oper t_elem_type
     CASE oper
       WHEN ET_OPER_UNA_MIN   RETURN 5
+      WHEN ET_OPER_UNA_PLS   RETURN 5
       WHEN ET_OPER_POW       RETURN 4
       WHEN ET_OPER_MUL       RETURN 3
       WHEN ET_OPER_DIV       RETURN 3
