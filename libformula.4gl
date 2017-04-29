@@ -19,7 +19,7 @@ PUBLIC CONSTANT EE_OPERATOR_ERROR       = -990
 PUBLIC CONSTANT EE_OVERFLOW_ERROR       = -989
 
 PRIVATE TYPE t_number DECIMAL(32)
-PRIVATE TYPE t_elem_type CHAR(1)
+PRIVATE TYPE t_elem_type CHAR(2)
 
 PRIVATE TYPE t_variable RECORD
                name STRING,
@@ -28,18 +28,24 @@ PRIVATE TYPE t_variable RECORD
 PUBLIC TYPE t_varlist DYNAMIC ARRAY OF t_variable
 PRIVATE DEFINE vars t_varlist
 
-PRIVATE CONSTANT ET_OPER_POW      = "^"
-PRIVATE CONSTANT ET_OPER_ADD      = "+"
-PRIVATE CONSTANT ET_OPER_SUB      = "-"
-PRIVATE CONSTANT ET_OPER_DIV      = "/"
-PRIVATE CONSTANT ET_OPER_MUL      = "*"
-PRIVATE CONSTANT ET_OPER_UNA_MIN  = "M"
-PRIVATE CONSTANT ET_OPER_UNA_PLS  = "P"
-PRIVATE CONSTANT ET_LEFT_BRACE    = "("
-PRIVATE CONSTANT ET_RIGHT_BRACE   = ")"
-PRIVATE CONSTANT ET_COMMA         = ","
-PRIVATE CONSTANT ET_FUNCTION      = "F"
-PRIVATE CONSTANT ET_VALUE         = "V"
+PRIVATE CONSTANT ET_OPER_POW       = "^"
+PRIVATE CONSTANT ET_OPER_ADD       = "+"
+PRIVATE CONSTANT ET_OPER_SUB       = "-"
+PRIVATE CONSTANT ET_OPER_DIV       = "/"
+PRIVATE CONSTANT ET_OPER_MUL       = "*"
+PRIVATE CONSTANT ET_OPER_UNA_MIN   = "M"
+PRIVATE CONSTANT ET_OPER_UNA_PLS   = "P"
+PRIVATE CONSTANT ET_OPER_EQL       = "=="
+PRIVATE CONSTANT ET_OPER_NEQ       = "!="
+PRIVATE CONSTANT ET_OPER_GRE       = ">"
+PRIVATE CONSTANT ET_OPER_GRE_EQL   = ">="
+PRIVATE CONSTANT ET_OPER_LOW       = "<"
+PRIVATE CONSTANT ET_OPER_LOW_EQL   = "<="
+PRIVATE CONSTANT ET_LEFT_BRACE     = "("
+PRIVATE CONSTANT ET_RIGHT_BRACE    = ")"
+PRIVATE CONSTANT ET_COMMA          = ","
+PRIVATE CONSTANT ET_FUNCTION       = "F"
+PRIVATE CONSTANT ET_VALUE          = "V"
 
 PRIVATE CONSTANT FN_SIN  = "sin"
 PRIVATE CONSTANT FN_ASIN = "asin"
@@ -417,47 +423,137 @@ FUNCTION test_oper()
     LET reg[4] = 3
     LET r = eval_operator(ET_OPER_POW, reg)
     TEST_ASSERT("test_oper.01001", r==0 AND reg.getLength()==3)
-    TEST_ASSERT("test_oper.01001", reg[3] IS NOT NULL AND reg[3] == 125)
+    TEST_ASSERT("test_oper.01002", reg[3] IS NOT NULL AND reg[3] == 125)
 
     CALL reg.clear()
     LET reg[1] = 100
     LET reg[2] = 200
     LET r = eval_operator(ET_OPER_ADD, reg)
-    TEST_ASSERT("test_oper.01001", r==0 AND reg.getLength()==1)
-    TEST_ASSERT("test_oper.01002", reg[1] IS NOT NULL AND reg[1] == 300)
+    TEST_ASSERT("test_oper.02001", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.02002", reg[1] IS NOT NULL AND reg[1] == 300)
 
     CALL reg.clear()
     LET reg[1] = 100
     LET reg[2] = 200
     LET r = eval_operator(ET_OPER_SUB, reg)
-    TEST_ASSERT("test_oper.01001", r==0 AND reg.getLength()==1)
-    TEST_ASSERT("test_oper.01003", reg[1] IS NOT NULL AND reg[1] == -100)
+    TEST_ASSERT("test_oper.03001", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.03003", reg[1] IS NOT NULL AND reg[1] == -100)
 
     CALL reg.clear()
     LET reg[1] = 5
     LET reg[2] = -3
     LET r = eval_operator(ET_OPER_MUL, reg)
-    TEST_ASSERT("test_oper.01001", r==0 AND reg.getLength()==1)
-    TEST_ASSERT("test_oper.01004", reg[1] IS NOT NULL AND reg[1] == -15)
+    TEST_ASSERT("test_oper.04001", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.04004", reg[1] IS NOT NULL AND reg[1] == -15)
 
     CALL reg.clear()
     LET reg[1] = 15
     LET reg[2] = -3
     LET r = eval_operator(ET_OPER_DIV, reg)
-    TEST_ASSERT("test_oper.01001", r==0 AND reg.getLength()==1)
-    TEST_ASSERT("test_oper.01005", reg[1] IS NOT NULL AND reg[1] == -5)
+    TEST_ASSERT("test_oper.05001", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.05005", reg[1] IS NOT NULL AND reg[1] == -5)
 
     CALL reg.clear()
     LET reg[1] = 15
     LET reg[2] = 0
     LET r = eval_operator(ET_OPER_DIV, reg)
-    TEST_ASSERT("test_oper.01001", r==EE_DIVISION_BY_ZERO )
+    TEST_ASSERT("test_oper.05101", r==EE_DIVISION_BY_ZERO )
+
+    CALL reg.clear()
+    LET reg[1] = 15
+    LET reg[2] = 15
+    LET r = eval_operator(ET_OPER_EQL, reg)
+    TEST_ASSERT("test_oper.07001", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.07005", reg[1] IS NOT NULL AND reg[1] == 1)
+    CALL reg.clear()
+    LET reg[1] = 15
+    LET reg[2] = 2
+    LET r = eval_operator(ET_OPER_EQL, reg)
+    TEST_ASSERT("test_oper.07011", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.07015", reg[1] IS NOT NULL AND reg[1] == 0)
+
+    CALL reg.clear()
+    LET reg[1] = 15
+    LET reg[2] = 15
+    LET r = eval_operator(ET_OPER_NEQ, reg)
+    TEST_ASSERT("test_oper.07101", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.07105", reg[1] IS NOT NULL AND reg[1] == 0)
+    CALL reg.clear()
+    LET reg[1] = 15
+    LET reg[2] = -2
+    LET r = eval_operator(ET_OPER_NEQ, reg)
+    TEST_ASSERT("test_oper.07111", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.07115", reg[1] IS NOT NULL AND reg[1] == 1)
+
+    CALL reg.clear()
+    LET reg[1] = 15
+    LET reg[2] = -2
+    LET r = eval_operator(ET_OPER_GRE, reg)
+    TEST_ASSERT("test_oper.07201", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.07205", reg[1] IS NOT NULL AND reg[1] == 1)
+    CALL reg.clear()
+    LET reg[1] = 15
+    LET reg[2] = 15
+    LET r = eval_operator(ET_OPER_GRE, reg)
+    TEST_ASSERT("test_oper.07211", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.07215", reg[1] IS NOT NULL AND reg[1] == 0)
+
+    CALL reg.clear()
+    LET reg[1] = 15
+    LET reg[2] = 15
+    LET r = eval_operator(ET_OPER_GRE_EQL, reg)
+    TEST_ASSERT("test_oper.07301", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.07305", reg[1] IS NOT NULL AND reg[1] == 1)
+    CALL reg.clear()
+    LET reg[1] = 16
+    LET reg[2] = 15
+    LET r = eval_operator(ET_OPER_GRE_EQL, reg)
+    TEST_ASSERT("test_oper.07311", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.07315", reg[1] IS NOT NULL AND reg[1] == 1)
+    CALL reg.clear()
+    LET reg[1] = 14
+    LET reg[2] = 15
+    LET r = eval_operator(ET_OPER_GRE_EQL, reg)
+    TEST_ASSERT("test_oper.07321", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.07325", reg[1] IS NOT NULL AND reg[1] == 0)
+
+    CALL reg.clear()
+    LET reg[1] = -2
+    LET reg[2] = 15
+    LET r = eval_operator(ET_OPER_LOW, reg)
+    TEST_ASSERT("test_oper.07401", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.07405", reg[1] IS NOT NULL AND reg[1] == 1)
+    CALL reg.clear()
+    LET reg[1] = 15
+    LET reg[2] = 15
+    LET r = eval_operator(ET_OPER_LOW, reg)
+    TEST_ASSERT("test_oper.07411", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.07415", reg[1] IS NOT NULL AND reg[1] == 0)
+
+    CALL reg.clear()
+    LET reg[1] = 15
+    LET reg[2] = 15
+    LET r = eval_operator(ET_OPER_LOW_EQL, reg)
+    TEST_ASSERT("test_oper.07501", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.07505", reg[1] IS NOT NULL AND reg[1] == 1)
+    CALL reg.clear()
+    LET reg[1] = 14
+    LET reg[2] = 15
+    LET r = eval_operator(ET_OPER_LOW_EQL, reg)
+    TEST_ASSERT("test_oper.07511", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.07515", reg[1] IS NOT NULL AND reg[1] == 1)
+    CALL reg.clear()
+    LET reg[1] = 16
+    LET reg[2] = 15
+    LET r = eval_operator(ET_OPER_LOW_EQL, reg)
+    TEST_ASSERT("test_oper.07521", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.07525", reg[1] IS NOT NULL AND reg[1] == 0)
 
     CALL reg.clear()
     CALL reg.clear()
     LET reg[1] = 15
     LET r = eval_operator(ET_OPER_DIV, reg)
-    TEST_ASSERT("test_oper.01001", r==EE_INVALID_OPERANDS )
+    TEST_ASSERT("test_oper.09001", r==EE_INVALID_OPERANDS )
 
 END FUNCTION
 
@@ -481,13 +577,25 @@ PRIVATE FUNCTION eval_operator(op,reg)
               LET r = EE_OVERFLOW_ERROR
            END IF
          WHEN ET_OPER_ADD
-           LET reg[xl] = reg[xl] + reg[xr]
+           LET reg[xl] = (reg[xl] + reg[xr])
          WHEN ET_OPER_SUB
-           LET reg[xl] = reg[xl] - reg[xr]
+           LET reg[xl] = (reg[xl] - reg[xr])
          WHEN ET_OPER_MUL
-           LET reg[xl] = reg[xl] * reg[xr]
+           LET reg[xl] = (reg[xl] * reg[xr])
          WHEN ET_OPER_DIV
-           LET reg[xl] = reg[xl] / reg[xr]
+           LET reg[xl] = (reg[xl] / reg[xr])
+         WHEN ET_OPER_EQL
+           LET reg[xl] = (reg[xl] == reg[xr])
+         WHEN ET_OPER_NEQ
+           LET reg[xl] = (reg[xl] != reg[xr])
+         WHEN ET_OPER_GRE
+           LET reg[xl] = (reg[xl] > reg[xr])
+         WHEN ET_OPER_GRE_EQL
+           LET reg[xl] = (reg[xl] >= reg[xr])
+         WHEN ET_OPER_LOW
+           LET reg[xl] = (reg[xl] < reg[xr])
+         WHEN ET_OPER_LOW_EQL
+           LET reg[xl] = (reg[xl] <= reg[xr])
          OTHERWISE
            ASSERT(FALSE)
        END CASE
@@ -565,6 +673,12 @@ PRIVATE FUNCTION check_operator(token)
       WHEN ET_OPER_MUL     RETURN TRUE
       WHEN ET_OPER_UNA_MIN RETURN TRUE
       WHEN ET_OPER_UNA_PLS RETURN TRUE
+      WHEN ET_OPER_EQL     RETURN TRUE
+      WHEN ET_OPER_NEQ     RETURN TRUE
+      WHEN ET_OPER_GRE     RETURN TRUE
+      WHEN ET_OPER_GRE_EQL RETURN TRUE
+      WHEN ET_OPER_LOW     RETURN TRUE
+      WHEN ET_OPER_LOW_EQL RETURN TRUE
       OTHERWISE            RETURN FALSE
     END CASE
 END FUNCTION
@@ -846,6 +960,26 @@ PRIVATE FUNCTION test_eval()
     CALL evaluate("sin(max(x1,3)/15*0.5)") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.04999",s, s==0 AND NVL(v,0)==0.479425538604203)
 
+    CALL evaluate("1==1") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.10001",s, s==0 AND NVL(v,0)==1.0)
+    CALL evaluate("6*5 == 30") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.10002",s, s==0 AND NVL(v,0)==1.0)
+    CALL evaluate("6*5 != 31") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.10003",s, s==0 AND NVL(v,0)==1.0)
+    CALL evaluate("6*5 <= 30") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.10004",s, s==0 AND NVL(v,0)==1.0)
+    CALL evaluate("6*5 < 31") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.10005",s, s==0 AND NVL(v,0)==1.0)
+    CALL evaluate("6*5 >= 30") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.10006",s, s==0 AND NVL(v,0)==1.0)
+    CALL evaluate("6*5 > 29") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.10007",s, s==0 AND NVL(v,0)==1.0)
+
+    CALL evaluate("(5>2*2)+(4==2*2)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.10101",s, s==0 AND NVL(v,0)==2.0)
+    CALL evaluate(" 5>2*2 + 4==2*2") RETURNING s, v -- (5>(2*2+4)) == (2*2)
+    TEST_ASSERT_EVAL("test_evaluate.10101",s, s==0 AND NVL(v,0)==0.0)
+
     -- Errors
 
     CALL evaluate("-") RETURNING s, v
@@ -913,6 +1047,18 @@ PRIVATE FUNCTION test_eval()
     TEST_ASSERT_EVAL("test_evaluate.90304",s, s==EE_INVALID_OPERANDS AND v IS NULL)
     CALL evaluate("1 ^ ") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.90305",s, s==EE_INVALID_OPERANDS AND v IS NULL)
+    CALL evaluate("1 == ") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90306",s, s==EE_INVALID_OPERANDS AND v IS NULL)
+    CALL evaluate("1 != ") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90307",s, s==EE_INVALID_OPERANDS AND v IS NULL)
+    CALL evaluate("1 > ") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90308",s, s==EE_INVALID_OPERANDS AND v IS NULL)
+    CALL evaluate("1 >= ") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90309",s, s==EE_INVALID_OPERANDS AND v IS NULL)
+    CALL evaluate("1 < ") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90310",s, s==EE_INVALID_OPERANDS AND v IS NULL)
+    CALL evaluate("1 <= ") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90311",s, s==EE_INVALID_OPERANDS AND v IS NULL)
 
 END FUNCTION
 
@@ -926,6 +1072,12 @@ PRIVATE FUNCTION unary_candidate(token, last_token)
        OR last_token == "/"
        OR last_token == "+"
        OR last_token == "-"
+       OR last_token == "=="
+       OR last_token == "!="
+       OR last_token == "<"
+       OR last_token == "<="
+       OR last_token == ">"
+       OR last_token == ">="
        OR last_token == "("
        THEN
           RETURN TRUE
@@ -977,7 +1129,7 @@ PRIVATE FUNCTION prepare(expr)
            r INTEGER,
            pos INTEGER, tokid SMALLINT, token STRING,
            last_pos INTEGER, last_tokid SMALLINT, last_token STRING,
-           tmp_pos INTEGER, tmp_tokid SMALLINT, tmp_token STRING,
+           next_pos INTEGER, next_tokid SMALLINT, next_token STRING,
            value t_number,
            s SMALLINT
 &ifdef DEBUG
@@ -995,6 +1147,7 @@ display "\nin : ", expr
           LET last_token = token
        END IF
        CALL liblexer.getNextToken(buf,pos,TRUE) RETURNING tokid,pos,token
+       CALL liblexer.getNextToken(buf,pos,TRUE) RETURNING next_tokid,next_pos,next_token
 &ifdef DEBUG
 display "pos=", pos USING "##&", " tid=", tokid USING "---&", " token=[", token, "]", column 50, "last: [", last_token, "]"
 &endif
@@ -1019,8 +1172,7 @@ display "pos=", pos USING "##&", " tid=", tokid USING "---&", " token=[", token,
            END IF
 
          WHEN SL_TOKID_IDENT
-           CALL liblexer.getNextToken(buf,pos,TRUE) RETURNING tmp_tokid,tmp_pos,tmp_token
-           IF tmp_tokid==SL_TOKID_OTHER AND tmp_token==ET_LEFT_BRACE THEN
+           IF next_tokid==SL_TOKID_OTHER AND next_token==ET_LEFT_BRACE THEN
               IF NOT stack_push_function(token) THEN
                  RETURN EE_INVALID_FUNCTION
               END IF
@@ -1043,6 +1195,18 @@ display "pos=", pos USING "##&", " tid=", tokid USING "---&", " token=[", token,
                  LET s = stack_push_operator(ET_OPER_UNA_PLS)
               END IF
               CONTINUE WHILE
+           END IF
+
+           -- Join tokens for operators like <= >= != ...
+           IF token=="=" AND next_token=="="
+           OR token=="!" AND next_token=="="
+           OR token=="<" AND next_token=="="
+           OR token==">" AND next_token=="="
+           THEN
+              LET token = token,next_token
+              LET next_token = NULL
+              LET pos = next_pos
+              LET next_pos = NULL
            END IF
 
            CASE
@@ -1177,11 +1341,7 @@ PRIVATE FUNCTION left_associative(oper)
     DEFINE oper t_elem_type
     CASE oper
       WHEN ET_OPER_POW       RETURN FALSE
-      WHEN ET_OPER_ADD       RETURN TRUE
-      WHEN ET_OPER_SUB       RETURN TRUE
-      WHEN ET_OPER_MUL       RETURN TRUE
-      WHEN ET_OPER_DIV       RETURN TRUE
-      OTHERWISE              ASSERT(FALSE)
+      OTHERWISE              RETURN TRUE
     END CASE
 END FUNCTION
 
@@ -1195,6 +1355,12 @@ PRIVATE FUNCTION precedence_index(oper)
       WHEN ET_OPER_DIV       RETURN 3
       WHEN ET_OPER_ADD       RETURN 2
       WHEN ET_OPER_SUB       RETURN 2
+      WHEN ET_OPER_EQL       RETURN 1
+      WHEN ET_OPER_NEQ       RETURN 1
+      WHEN ET_OPER_GRE       RETURN 1
+      WHEN ET_OPER_GRE_EQL   RETURN 1
+      WHEN ET_OPER_LOW       RETURN 1
+      WHEN ET_OPER_LOW_EQL   RETURN 1
       OTHERWISE              ASSERT(FALSE)
     END CASE
 END FUNCTION
