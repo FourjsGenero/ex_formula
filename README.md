@@ -52,17 +52,17 @@ Example:
 
  Operator | Description
 --------- | ----------------------------
-    **    | Exponentiation
-   \+     | Addition
-   \-     | Substraction
-   \*     | Multiplication
-    /     | Division
-    ==    | Equal to
-    !=    | Different from
-    <     | Lower than
-    <=    | Lower or equal to
-    >     | Greater than
-    >=    | Greater or equal to
+ `` ** `` | Exponentiation
+ `` +  `` | Addition
+ `` -  `` | Substraction
+ `` *  `` | Multiplication
+ `` /  `` | Division
+ `` == `` | Equal to
+ `` != `` | Different from
+ `` <  `` | Lower than
+ `` <= `` | Lower or equal to
+ `` >  `` | Greater than
+ `` >= `` | Greater or equal to
 
 
 ### Functions
