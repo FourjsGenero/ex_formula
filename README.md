@@ -84,7 +84,7 @@ Example:
   exp(x)     | Base-e exponential
   logn(x)    | Natural logarithm
   rand(m)    | Random integer 0<=r<=m
-  mod(a,b)   | Modulo
+  mod(a,b)   | Modulo (reminder of a/b)
 
 
 ## Programmer's reference: libformula.4gl
@@ -127,6 +127,9 @@ The status returned by evaluate() can take following values:
 - EE_UNDEFINED_VARIABLE
 - EE_COMP_STACK_ERROR
 - EE_DIVISION_BY_ZERO
+- EE_OPERATOR_ERROR
+- EE_OVERFLOW_ERROR
+- EE_INVALID_ARGUMENT
 
 ## Programmer's reference: liblexer.4gl
 

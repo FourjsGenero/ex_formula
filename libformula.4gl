@@ -63,6 +63,7 @@ PRIVATE CONSTANT FN_MOD  = "mod"
 PRIVATE CONSTANT FN_RAND = "rand"
 PRIVATE CONSTANT FN_DEG  = "deg"
 PRIVATE CONSTANT FN_RAD  = "rad"
+PRIVATE CONSTANT FN_IIF  = "iif"
 
 PRIVATE TYPE t_element RECORD
                type t_elem_type,   -- ET_*
@@ -349,6 +350,26 @@ FUNCTION test_func()
 
     CALL reg.clear()
     LET reg[1] = 1
+    LET reg[2] = 100
+    LET reg[3] = 200
+    LET r = eval_function(FN_IIF, reg)
+    TEST_ASSERT("test_func.07801", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_func.07802", reg[1] IS NOT NULL AND reg[1] == 100)
+    CALL reg.clear()
+    LET reg[1] = 0
+    LET reg[2] = 100
+    LET reg[3] = 200
+    LET r = eval_function(FN_IIF, reg)
+    TEST_ASSERT("test_func.07811", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_func.07812", reg[1] IS NOT NULL AND reg[1] == 200)
+    CALL reg.clear()
+    LET reg[1] = 0
+    LET reg[2] = 100
+    LET r = eval_function(FN_IIF, reg)
+    TEST_ASSERT("test_func.07811", r==EE_INVALID_OPERANDS )
+
+    CALL reg.clear()
+    LET reg[1] = 1
     LET reg[2] = 1
     LET r = eval_function(FN_SIN, reg)
     TEST_ASSERT("test_func.50001", r<=0 AND reg.getLength()==2)
@@ -367,7 +388,7 @@ END FUNCTION
 PRIVATE FUNCTION eval_function(fn, reg)
     DEFINE fn STRING,
            reg DYNAMIC ARRAY OF t_number
-    DEFINE xl,xr SMALLINT
+    DEFINE x0,xl,xr SMALLINT
     LET xr = reg.getLength()
     LET xl = xr-1
     CASE fn
@@ -419,6 +440,12 @@ PRIVATE FUNCTION eval_function(fn, reg)
       WHEN FN_RAD
         IF xr < 1 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xr] = util.Math.toRadians(reg[xr])
+      WHEN FN_IIF
+        IF xr < 3 THEN RETURN EE_INVALID_OPERANDS END IF
+        LET x0 = xr-2
+        LET reg[x0] = IIF( reg[x0], reg[xl], reg[xr] )
+        CALL reg.deleteElement(xr)
+        CALL reg.deleteElement(xl)
       OTHERWISE
         ASSERT(FALSE)
     END CASE
@@ -753,6 +780,7 @@ PRIVATE FUNCTION check_function(token)
       WHEN FN_RAND  RETURN TRUE
       WHEN FN_DEG   RETURN TRUE
       WHEN FN_RAD   RETURN TRUE
+      WHEN FN_IIF    RETURN TRUE
       OTHERWISE     RETURN FALSE
     END CASE
 END FUNCTION
@@ -993,9 +1021,13 @@ PRIVATE FUNCTION test_eval()
     CALL evaluate("deg(2)") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.04015",s, s==0 AND NVL(v,0)==114.59155902616465)
     CALL evaluate("rad(45)") RETURNING s, v
-    TEST_ASSERT_EVAL("test_evaluate.04015",s, s==0 AND NVL(v,0)==0.7853981633974483)
+    TEST_ASSERT_EVAL("test_evaluate.04016",s, s==0 AND NVL(v,0)==0.7853981633974483)
     CALL evaluate("deg(rad(2))") RETURNING s, v
-    TEST_ASSERT_EVAL("test_evaluate.04015",s, s==0 AND NVL(v,0)==2.0)
+    TEST_ASSERT_EVAL("test_evaluate.04017",s, s==0 AND NVL(v,0)==2.0)
+    CALL evaluate("iif(2>3,11,22)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.04018",s, s==0 AND NVL(v,0)==22.0)
+    CALL evaluate("iif(2==2,11,22)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.04019",s, s==0 AND NVL(v,0)==11.0)
 
     CALL evaluate("sin(max(x1,3)/15*0.5)") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.04999",s, s==0 AND NVL(v,0)==0.479425538604203)
@@ -1099,6 +1131,11 @@ PRIVATE FUNCTION test_eval()
     TEST_ASSERT_EVAL("test_evaluate.90310",s, s==EE_INVALID_OPERANDS AND v IS NULL)
     CALL evaluate("1 <= ") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.90311",s, s==EE_INVALID_OPERANDS AND v IS NULL)
+    CALL evaluate("iif(1,2) ") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90313",s, s==EE_INVALID_OPERANDS AND v IS NULL)
+
+    CALL evaluate("cos(1,2)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.90401",s, s==EE_COMP_STACK_ERROR AND v IS NULL)
 
 END FUNCTION
 
