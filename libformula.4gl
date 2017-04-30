@@ -17,6 +17,7 @@ PUBLIC CONSTANT EE_COMP_STACK_ERROR     = -992
 PUBLIC CONSTANT EE_DIVISION_BY_ZERO     = -991
 PUBLIC CONSTANT EE_OPERATOR_ERROR       = -990
 PUBLIC CONSTANT EE_OVERFLOW_ERROR       = -989
+PUBLIC CONSTANT EE_INVALID_ARGUMENT     = -988
 
 PRIVATE TYPE t_number DECIMAL(32)
 PRIVATE TYPE t_elem_type CHAR(2)
@@ -28,7 +29,7 @@ PRIVATE TYPE t_variable RECORD
 PUBLIC TYPE t_varlist DYNAMIC ARRAY OF t_variable
 PRIVATE DEFINE vars t_varlist
 
-PRIVATE CONSTANT ET_OPER_POW       = "^"
+PRIVATE CONSTANT ET_OPER_EXP       = "**"
 PRIVATE CONSTANT ET_OPER_ADD       = "+"
 PRIVATE CONSTANT ET_OPER_SUB       = "-"
 PRIVATE CONSTANT ET_OPER_DIV       = "/"
@@ -51,12 +52,13 @@ PRIVATE CONSTANT FN_SIN  = "sin"
 PRIVATE CONSTANT FN_ASIN = "asin"
 PRIVATE CONSTANT FN_COS  = "cos"
 PRIVATE CONSTANT FN_ACOS = "acos"
+PRIVATE CONSTANT FN_TAN  = "tan"
+PRIVATE CONSTANT FN_ATAN = "atan"
 PRIVATE CONSTANT FN_MIN  = "min"
 PRIVATE CONSTANT FN_MAX  = "max"
 PRIVATE CONSTANT FN_SQRT = "sqrt"
 PRIVATE CONSTANT FN_EXP  = "exp"
 PRIVATE CONSTANT FN_LOGN = "logn"
-PRIVATE CONSTANT FN_TAN  = "tan"
 PRIVATE CONSTANT FN_MOD  = "mod"
 PRIVATE CONSTANT FN_RAND = "rand"
 PRIVATE CONSTANT FN_DEG  = "deg"
@@ -125,6 +127,7 @@ PUBLIC FUNCTION getErrorMessage(num)
       WHEN EE_DIVISION_BY_ZERO     LET m="Syntax error"
       WHEN EE_OPERATOR_ERROR       LET m="Operator error"
       WHEN EE_OVERFLOW_ERROR       LET m="Overflow error"
+      WHEN EE_INVALID_ARGUMENT     LET m="Invalid argument"
    END CASE
    IF num==0 THEN
       RETURN "No error"
@@ -260,6 +263,11 @@ FUNCTION test_func()
     TEST_ASSERT("test_func.02102", reg[1] IS NOT NULL AND reg[1] == 1.0471975511965979)
 
     CALL reg.clear()
+    LET reg[1] = 2.0
+    LET r = eval_function(FN_ACOS, reg)
+    TEST_ASSERT("test_func.02101", r==EE_INVALID_ARGUMENT )
+
+    CALL reg.clear()
     LET reg[1] = 5
     LET reg[2] = 10
     LET r = eval_function(FN_MIN, reg)
@@ -329,9 +337,15 @@ FUNCTION test_func()
 
     CALL reg.clear()
     LET reg[1] = 1
-    LET r = eval_function(FN_TAN, reg)
+    LET r = eval_function(FN_ATAN, reg)
     TEST_ASSERT("test_func.07601", r==0 AND reg.getLength()==1)
-    TEST_ASSERT("test_func.07602", reg[1] IS NOT NULL AND reg[1] == 1.5574077246549023)
+    TEST_ASSERT("test_func.07602", reg[1] IS NOT NULL AND reg[1] == 0.7853981633974483)
+
+    CALL reg.clear()
+    LET reg[1] = 1
+    LET r = eval_function(FN_TAN, reg)
+    TEST_ASSERT("test_func.07701", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_func.07702", reg[1] IS NOT NULL AND reg[1] == 1.5574077246549023)
 
     CALL reg.clear()
     LET reg[1] = 1
@@ -369,6 +383,12 @@ PRIVATE FUNCTION eval_function(fn, reg)
       WHEN FN_ACOS
         IF xr < 1 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xr] = util.Math.acos(reg[xr])
+      WHEN FN_TAN
+        IF xr < 1 THEN RETURN EE_INVALID_OPERANDS END IF
+        LET reg[xr] = util.Math.tan(reg[xr])
+      WHEN FN_ATAN
+        IF xr < 1 THEN RETURN EE_INVALID_OPERANDS END IF
+        LET reg[xr] = util.Math.atan(reg[xr])
       WHEN FN_MIN
         IF xr < 2 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xl] = IIF(reg[xl] < reg[xr], reg[xl], reg[xr])
@@ -386,9 +406,6 @@ PRIVATE FUNCTION eval_function(fn, reg)
       WHEN FN_LOGN
         IF xr < 1 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xr] = fgl_decimal_logn(reg[xr])
-      WHEN FN_TAN
-        IF xr < 1 THEN RETURN EE_INVALID_OPERANDS END IF
-        LET reg[xr] = util.Math.tan(reg[xr])
       WHEN FN_MOD
         IF xr < 2 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xl] = reg[xl] MOD reg[xr]
@@ -405,6 +422,9 @@ PRIVATE FUNCTION eval_function(fn, reg)
       OTHERWISE
         ASSERT(FALSE)
     END CASE
+    IF reg[ reg.getLength() ] IS NULL THEN
+       RETURN EE_INVALID_ARGUMENT
+    END IF
     RETURN 0
 END FUNCTION
 
@@ -421,7 +441,7 @@ FUNCTION test_oper()
     LET reg[2] = -1 -- not used
     LET reg[3] = 5
     LET reg[4] = 3
-    LET r = eval_operator(ET_OPER_POW, reg)
+    LET r = eval_operator(ET_OPER_EXP, reg)
     TEST_ASSERT("test_oper.01001", r==0 AND reg.getLength()==3)
     TEST_ASSERT("test_oper.01002", reg[3] IS NOT NULL AND reg[3] == 125)
 
@@ -571,7 +591,7 @@ PRIVATE FUNCTION eval_operator(op,reg)
     TRY
        LET xl = xr-1
        CASE op
-         WHEN ET_OPER_POW
+         WHEN ET_OPER_EXP
            LET reg[xl] = fgl_decimal_power(reg[xl],reg[xr])
            IF reg[xl] IS NULL THEN
               LET r = EE_OVERFLOW_ERROR
@@ -666,7 +686,7 @@ END FUNCTION
 PRIVATE FUNCTION check_operator(token)
     DEFINE token STRING
     CASE token
-      WHEN ET_OPER_POW     RETURN TRUE
+      WHEN ET_OPER_EXP     RETURN TRUE
       WHEN ET_OPER_ADD     RETURN TRUE
       WHEN ET_OPER_SUB     RETURN TRUE
       WHEN ET_OPER_DIV     RETURN TRUE
@@ -718,8 +738,12 @@ END FUNCTION
 PRIVATE FUNCTION check_function(token)
     DEFINE token STRING
     CASE token
+      WHEN FN_ASIN  RETURN TRUE
       WHEN FN_SIN   RETURN TRUE
+      WHEN FN_ACOS   RETURN TRUE
       WHEN FN_COS   RETURN TRUE
+      WHEN FN_ATAN   RETURN TRUE
+      WHEN FN_TAN   RETURN TRUE
       WHEN FN_MIN   RETURN TRUE
       WHEN FN_MAX   RETURN TRUE
       WHEN FN_SQRT  RETURN TRUE
@@ -918,14 +942,18 @@ PRIVATE FUNCTION test_eval()
     TEST_ASSERT_EVAL("test_evaluate.02007",s, s==0 AND NVL(v,0)==2.0)
     CALL evaluate("(1+199)/100") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.02008",s, s==0 AND NVL(v,0)==2.0)
-    CALL evaluate("5+5^3") RETURNING s, v
+    CALL evaluate("5+5**3") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.02009",s, s==0 AND NVL(v,0)==130.0)
-    CALL evaluate("2^3^2") RETURNING s, v
+    CALL evaluate("2**3**2") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.02009",s, s==0 AND NVL(v,0)==512.0)
-    CALL evaluate("(2^3)^2") RETURNING s, v
+    CALL evaluate("(2**3)**2") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.02009",s, s==0 AND NVL(v,0)==64.0)
     CALL evaluate("-(3+2)-1") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.02010",s, s==0 AND NVL(v,0)==-6.0)
+    CALL evaluate("3*5**2") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.02011",s, s==0 AND NVL(v,0)==75.0)
+    CALL evaluate("(3+3)**2") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.02012",s, s==0 AND NVL(v,0)==36.0)
 
     CALL evaluate("x1+x2") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.03001",s, s==0 AND NVL(v,0)==215.0)
@@ -956,6 +984,18 @@ PRIVATE FUNCTION test_eval()
     TEST_ASSERT_EVAL("test_evaluate.04010",s, s==0 AND NVL(v,0)==9.999999999999999999999999999791)
     CALL evaluate("mod(28,5)") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.04011",s, s==0 AND NVL(v,0)==3.0)
+    CALL evaluate("asin(0.2)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.04012",s, s==0 AND NVL(v,0)==0.2013579207903308)
+    CALL evaluate("acos(0.2)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.04013",s, s==0 AND NVL(v,0)==1.369438406004566)
+    CALL evaluate("atan(0.2)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.04014",s, s==0 AND NVL(v,0)==0.19739555984988078)
+    CALL evaluate("deg(2)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.04015",s, s==0 AND NVL(v,0)==114.59155902616465)
+    CALL evaluate("rad(45)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.04015",s, s==0 AND NVL(v,0)==0.7853981633974483)
+    CALL evaluate("deg(rad(2))") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.04015",s, s==0 AND NVL(v,0)==2.0)
 
     CALL evaluate("sin(max(x1,3)/15*0.5)") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.04999",s, s==0 AND NVL(v,0)==0.479425538604203)
@@ -990,9 +1030,9 @@ PRIVATE FUNCTION test_eval()
     TEST_ASSERT_EVAL("test_evaluate.90003",s, s==EE_SYNTAX_ERROR AND v IS NULL)
     CALL evaluate("/") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.90004",s, s==EE_SYNTAX_ERROR AND v IS NULL)
-    CALL evaluate("^") RETURNING s, v
+    CALL evaluate("**") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.90005",s, s==EE_SYNTAX_ERROR AND v IS NULL)
-    CALL evaluate("^1") RETURNING s, v
+    CALL evaluate("**1") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.90006",s, s==EE_SYNTAX_ERROR AND v IS NULL)
     CALL evaluate("*1") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.90007",s, s==EE_SYNTAX_ERROR AND v IS NULL)
@@ -1045,7 +1085,7 @@ PRIVATE FUNCTION test_eval()
     TEST_ASSERT_EVAL("test_evaluate.90303",s, s==EE_INVALID_OPERANDS AND v IS NULL)
     CALL evaluate("1 * ") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.90304",s, s==EE_INVALID_OPERANDS AND v IS NULL)
-    CALL evaluate("1 ^ ") RETURNING s, v
+    CALL evaluate("1 ** ") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.90305",s, s==EE_INVALID_OPERANDS AND v IS NULL)
     CALL evaluate("1 == ") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.90306",s, s==EE_INVALID_OPERANDS AND v IS NULL)
@@ -1198,7 +1238,8 @@ display "pos=", pos USING "##&", " tid=", tokid USING "---&", " token=[", token,
            END IF
 
            -- Join tokens for operators like <= >= != ...
-           IF token=="=" AND next_token=="="
+           IF token=="*" AND next_token=="*"
+           OR token=="=" AND next_token=="="
            OR token=="!" AND next_token=="="
            OR token=="<" AND next_token=="="
            OR token==">" AND next_token=="="
@@ -1340,7 +1381,7 @@ END FUNCTION
 PRIVATE FUNCTION left_associative(oper)
     DEFINE oper t_elem_type
     CASE oper
-      WHEN ET_OPER_POW       RETURN FALSE
+      WHEN ET_OPER_EXP       RETURN FALSE
       OTHERWISE              RETURN TRUE
     END CASE
 END FUNCTION
@@ -1350,7 +1391,7 @@ PRIVATE FUNCTION precedence_index(oper)
     CASE oper
       WHEN ET_OPER_UNA_MIN   RETURN 5
       WHEN ET_OPER_UNA_PLS   RETURN 5
-      WHEN ET_OPER_POW       RETURN 4
+      WHEN ET_OPER_EXP       RETURN 4
       WHEN ET_OPER_MUL       RETURN 3
       WHEN ET_OPER_DIV       RETURN 3
       WHEN ET_OPER_ADD       RETURN 2

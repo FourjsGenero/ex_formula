@@ -28,13 +28,64 @@ decimal separator.
 1. Load the formula.4pw project
 2. Build the project
 
-## Usage
+## The demo program
 
 1. Start the program
 2. Enter a formula in the textedit field
 3. Hit the [Compute] button to make the calculation
 4. Define your variables in the right panel
 5. Use the variables in a formula
+
+## Formula Syntax
+
+### Basics
+
+The syntax supported by the libformla.4gl library is similar to the Genero BDL
+expression syntax, using numbers, operators, functions and variables.
+
+Example:
+``
+( var1 * 10.5 ) / min( var2, 100 )
+``
+
+### Operators
+
+ Operator | Description
+--------- | ----------------------------
+    **    | Exponentiation
+   \+     | Addition
+   \-     | Substraction
+   \*     | Multiplication
+    /     | Division
+    ==    | Equal to
+    !=    | Different from
+    <     | Lower than
+    <=    | Lower or equal to
+    >     | Greater than
+    >=    | Greater or equal to
+
+
+### Functions
+
+ Function    | Description
+------------ | ----------------------------
+  min(a,b)   | Minimum of a and b
+  max(a,b)   | Maximum of a and b
+  iif(c,a,b) | Conditional selection (if c!=0, a otherwise b)
+  asin(x)    | Arc sine (x in radians)
+  sin(x)     | Sine (x in radians)
+  acos(x)    | Arc cosine (x in radians)
+  cos(x)     | Cosine (x in radians)
+  atan(x)    | Arc tangent (x in radians)
+  tan(x)     | Tangent (x in radians)
+  deg(r)     | Convert radians to degrees
+  rad(d)     | Convert degrees to radians
+  sqrt(x)    | Square root
+  exp(x)     | Base-e exponential
+  logn(x)    | Natural logarithm
+  rand(m)    | Random integer 0<=r<=m
+  mod(a,b)   | Modulo
+
 
 ## Programmer's reference: libformula.4gl
 
