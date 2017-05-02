@@ -67,6 +67,7 @@ PRIVATE CONSTANT FN_RAND = "rand"
 PRIVATE CONSTANT FN_DEG  = "deg"
 PRIVATE CONSTANT FN_RAD  = "rad"
 PRIVATE CONSTANT FN_IIF  = "iif"
+PRIVATE CONSTANT FN_ABS  = "abs"
 
 PRIVATE TYPE t_element RECORD
                type t_elem_type,   -- ET_*
@@ -372,6 +373,20 @@ FUNCTION test_func()
     TEST_ASSERT("test_func.07811", r==EE_INVALID_OPERANDS )
 
     CALL reg.clear()
+    LET reg[1] = 10
+    LET r = eval_function(FN_ABS, reg)
+    TEST_ASSERT("test_func.07901", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_func.07902", reg[1] IS NOT NULL AND reg[1] == 10)
+    CALL reg.clear()
+    LET reg[1] = -10
+    LET r = eval_function(FN_ABS, reg)
+    TEST_ASSERT("test_func.07911", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_func.07912", reg[1] IS NOT NULL AND reg[1] == 10)
+    CALL reg.clear()
+    LET r = eval_function(FN_ABS, reg)
+    TEST_ASSERT("test_func.07921", r==EE_INVALID_OPERANDS )
+
+    CALL reg.clear()
     LET reg[1] = 1
     LET reg[2] = 1
     LET r = eval_function(FN_SIN, reg)
@@ -394,61 +409,52 @@ PRIVATE FUNCTION eval_function(fn, reg)
     DEFINE x0,xl,xr SMALLINT
     LET xr = reg.getLength()
     LET xl = xr-1
+    LET x0 = xr-2
+    IF xr < function_arguments(fn) THEN
+       RETURN EE_INVALID_OPERANDS
+    END IF
     CASE fn
       WHEN FN_SIN
-        IF xr < 1 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xr] = util.Math.sin(reg[xr])
       WHEN FN_ASIN
-        IF xr < 1 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xr] = util.Math.asin(reg[xr])
       WHEN FN_COS
-        IF xr < 1 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xr] = util.Math.cos(reg[xr])
       WHEN FN_ACOS
-        IF xr < 1 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xr] = util.Math.acos(reg[xr])
       WHEN FN_TAN
-        IF xr < 1 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xr] = util.Math.tan(reg[xr])
       WHEN FN_ATAN
-        IF xr < 1 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xr] = util.Math.atan(reg[xr])
       WHEN FN_MIN
-        IF xr < 2 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xl] = IIF(reg[xl] < reg[xr], reg[xl], reg[xr])
         CALL reg.deleteElement(xr)
       WHEN FN_MAX
-        IF xr < 2 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xl] = IIF(reg[xl] > reg[xr], reg[xl], reg[xr])
         CALL reg.deleteElement(xr)
       WHEN FN_SQRT
-        IF xr < 1 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xr] = fgl_decimal_sqrt(reg[xr])
       WHEN FN_EXP
-        IF xr < 1 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xr] = fgl_decimal_exp(reg[xr])
       WHEN FN_LOGN
-        IF xr < 1 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xr] = fgl_decimal_logn(reg[xr])
       WHEN FN_MOD
-        IF xr < 2 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xl] = reg[xl] MOD reg[xr]
         CALL reg.deleteElement(xr)
       WHEN FN_RAND
-        IF xr < 1 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xr] = util.Math.rand(reg[xr])
       WHEN FN_DEG
-        IF xr < 1 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xr] = util.Math.toDegrees(reg[xr])
       WHEN FN_RAD
-        IF xr < 1 THEN RETURN EE_INVALID_OPERANDS END IF
         LET reg[xr] = util.Math.toRadians(reg[xr])
       WHEN FN_IIF
-        IF xr < 3 THEN RETURN EE_INVALID_OPERANDS END IF
-        LET x0 = xr-2
         LET reg[x0] = IIF( reg[x0], reg[xl], reg[xr] )
         CALL reg.deleteElement(xr)
         CALL reg.deleteElement(xl)
+      WHEN FN_ABS
+        IF reg[xr] < 0 THEN
+           LET reg[xr] = - reg[xr]
+        END IF
       OTHERWISE
         ASSERT(FALSE)
     END CASE
@@ -797,27 +803,33 @@ PRIVATE FUNCTION check_operator(elem_type)
     RETURN ( operator_operands(elem_type) > 0 )
 END FUNCTION
 
-PRIVATE FUNCTION check_function(token)
+PRIVATE FUNCTION function_arguments(token)
     DEFINE token STRING
     CASE token
-      WHEN FN_ASIN  RETURN TRUE
-      WHEN FN_SIN   RETURN TRUE
-      WHEN FN_ACOS   RETURN TRUE
-      WHEN FN_COS   RETURN TRUE
-      WHEN FN_ATAN   RETURN TRUE
-      WHEN FN_TAN   RETURN TRUE
-      WHEN FN_MIN   RETURN TRUE
-      WHEN FN_MAX   RETURN TRUE
-      WHEN FN_SQRT  RETURN TRUE
-      WHEN FN_EXP   RETURN TRUE
-      WHEN FN_LOGN  RETURN TRUE
-      WHEN FN_MOD   RETURN TRUE
-      WHEN FN_RAND  RETURN TRUE
-      WHEN FN_DEG   RETURN TRUE
-      WHEN FN_RAD   RETURN TRUE
-      WHEN FN_IIF    RETURN TRUE
-      OTHERWISE     RETURN FALSE
+      WHEN FN_ASIN  RETURN 1
+      WHEN FN_SIN   RETURN 1
+      WHEN FN_ACOS  RETURN 1
+      WHEN FN_COS   RETURN 1
+      WHEN FN_ATAN  RETURN 1
+      WHEN FN_TAN   RETURN 1
+      WHEN FN_MIN   RETURN 2
+      WHEN FN_MAX   RETURN 2
+      WHEN FN_SQRT  RETURN 1
+      WHEN FN_EXP   RETURN 1
+      WHEN FN_LOGN  RETURN 1
+      WHEN FN_MOD   RETURN 2
+      WHEN FN_RAND  RETURN 1
+      WHEN FN_DEG   RETURN 1
+      WHEN FN_RAD   RETURN 1
+      WHEN FN_IIF   RETURN 3
+      WHEN FN_ABS   RETURN 1
+      OTHERWISE     RETURN -1
     END CASE
+END FUNCTION
+
+PRIVATE FUNCTION check_function(token)
+    DEFINE token STRING
+    RETURN ( function_arguments(token) >= 0 )
 END FUNCTION
 
 PRIVATE FUNCTION output_add_function(name)
@@ -1058,6 +1070,10 @@ PRIVATE FUNCTION test_eval()
     TEST_ASSERT_EVAL("test_evaluate.04018",s, s==0 AND NVL(v,0)==22.0)
     CALL evaluate("iif(2==2,11,22)") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.04019",s, s==0 AND NVL(v,0)==11.0)
+    CALL evaluate("abs(15)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.04020",s, s==0 AND NVL(v,0)==15.0)
+    CALL evaluate("abs(-15)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.04021",s, s==0 AND NVL(v,0)==15.0)
 
     CALL evaluate("sin(max(x1,3)/15*0.5)") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.04999",s, s==0 AND NVL(v,0)==0.479425538604203)
