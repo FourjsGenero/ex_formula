@@ -63,6 +63,9 @@ Example:
  `` <= `` | Lower or equal to
  `` >  `` | Greater than
  `` >= `` | Greater or equal to
+ `` and ``| Logical AND ( 1 and 0 = 0 )
+ `` or  ``| Logical OR ( 1 or 0 = 1 )
+ `` not ``| Logical NOR ( not 1 = 0 )
 
 
 ### Functions
@@ -85,6 +88,7 @@ Example:
   logn(x)    | Natural logarithm
   rand(m)    | Random integer 0<=r<=m
   mod(a,b)   | Modulo (reminder of a/b)
+  abs(x)     | Returns -x if x<0
 
 
 ## Programmer's reference: libformula.4gl
