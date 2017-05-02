@@ -20,7 +20,7 @@ PUBLIC CONSTANT EE_OVERFLOW_ERROR       = -989
 PUBLIC CONSTANT EE_INVALID_ARGUMENT     = -988
 
 PRIVATE TYPE t_number DECIMAL(32)
-PRIVATE TYPE t_elem_type CHAR(2)
+PRIVATE TYPE t_elem_type SMALLINT
 
 PRIVATE TYPE t_variable RECORD
                name STRING,
@@ -29,24 +29,27 @@ PRIVATE TYPE t_variable RECORD
 PUBLIC TYPE t_varlist DYNAMIC ARRAY OF t_variable
 PRIVATE DEFINE vars t_varlist
 
-PRIVATE CONSTANT ET_OPER_EXP       = "**"
-PRIVATE CONSTANT ET_OPER_ADD       = "+"
-PRIVATE CONSTANT ET_OPER_SUB       = "-"
-PRIVATE CONSTANT ET_OPER_DIV       = "/"
-PRIVATE CONSTANT ET_OPER_MUL       = "*"
-PRIVATE CONSTANT ET_OPER_UNA_MIN   = "M"
-PRIVATE CONSTANT ET_OPER_UNA_PLS   = "P"
-PRIVATE CONSTANT ET_OPER_EQL       = "=="
-PRIVATE CONSTANT ET_OPER_NEQ       = "!="
-PRIVATE CONSTANT ET_OPER_GRE       = ">"
-PRIVATE CONSTANT ET_OPER_GRE_EQL   = ">="
-PRIVATE CONSTANT ET_OPER_LOW       = "<"
-PRIVATE CONSTANT ET_OPER_LOW_EQL   = "<="
-PRIVATE CONSTANT ET_LEFT_BRACE     = "("
-PRIVATE CONSTANT ET_RIGHT_BRACE    = ")"
-PRIVATE CONSTANT ET_COMMA          = ","
-PRIVATE CONSTANT ET_FUNCTION       = "F"
-PRIVATE CONSTANT ET_VALUE          = "V"
+PRIVATE CONSTANT ET_OPER_EXP       = 101
+PRIVATE CONSTANT ET_OPER_ADD       = 102
+PRIVATE CONSTANT ET_OPER_SUB       = 103
+PRIVATE CONSTANT ET_OPER_DIV       = 104
+PRIVATE CONSTANT ET_OPER_MUL       = 105
+PRIVATE CONSTANT ET_OPER_UNA_MIN   = 106
+PRIVATE CONSTANT ET_OPER_UNA_PLS   = 107
+PRIVATE CONSTANT ET_OPER_EQL       = 108
+PRIVATE CONSTANT ET_OPER_NEQ       = 109
+PRIVATE CONSTANT ET_OPER_GRE       = 110
+PRIVATE CONSTANT ET_OPER_GRE_EQL   = 111
+PRIVATE CONSTANT ET_OPER_LOW       = 112
+PRIVATE CONSTANT ET_OPER_LOW_EQL   = 113
+PRIVATE CONSTANT ET_OPER_AND       = 114
+PRIVATE CONSTANT ET_OPER_OR        = 115
+PRIVATE CONSTANT ET_OPER_NOT       = 116
+PRIVATE CONSTANT ET_LEFT_BRACE     = 201
+PRIVATE CONSTANT ET_RIGHT_BRACE    = 202
+PRIVATE CONSTANT ET_COMMA          = 301
+PRIVATE CONSTANT ET_FUNCTION       = 401
+PRIVATE CONSTANT ET_VALUE          = 501
 
 PRIVATE CONSTANT FN_SIN  = "sin"
 PRIVATE CONSTANT FN_ASIN = "asin"
@@ -125,7 +128,7 @@ PUBLIC FUNCTION getErrorMessage(num)
       WHEN EE_PARENTHESES_MISMATCH LET m="Parentheses mismatch"
       WHEN EE_UNDEFINED_VARIABLE   LET m="Undefined variable"
       WHEN EE_COMP_STACK_ERROR     LET m="Computing stack error"
-      WHEN EE_DIVISION_BY_ZERO     LET m="Syntax error"
+      WHEN EE_DIVISION_BY_ZERO     LET m="Division by zero"
       WHEN EE_OPERATOR_ERROR       LET m="Operator error"
       WHEN EE_OVERFLOW_ERROR       LET m="Overflow error"
       WHEN EE_INVALID_ARGUMENT     LET m="Invalid argument"
@@ -499,12 +502,16 @@ FUNCTION test_oper()
     LET r = eval_operator(ET_OPER_DIV, reg)
     TEST_ASSERT("test_oper.05001", r==0 AND reg.getLength()==1)
     TEST_ASSERT("test_oper.05005", reg[1] IS NOT NULL AND reg[1] == -5)
-
     CALL reg.clear()
     LET reg[1] = 15
     LET reg[2] = 0
     LET r = eval_operator(ET_OPER_DIV, reg)
-    TEST_ASSERT("test_oper.05101", r==EE_DIVISION_BY_ZERO )
+    TEST_ASSERT("test_oper.05011", r==EE_DIVISION_BY_ZERO )
+    CALL reg.clear()
+    CALL reg.clear()
+    LET reg[1] = 15
+    LET r = eval_operator(ET_OPER_DIV, reg)
+    TEST_ASSERT("test_oper.05091", r==EE_INVALID_OPERANDS )
 
     CALL reg.clear()
     LET reg[1] = 15
@@ -597,10 +604,53 @@ FUNCTION test_oper()
     TEST_ASSERT("test_oper.07525", reg[1] IS NOT NULL AND reg[1] == 0)
 
     CALL reg.clear()
+    LET reg[1] = 1
+    LET reg[2] = 1
+    LET r = eval_operator(ET_OPER_AND, reg)
+    TEST_ASSERT("test_oper.08001", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.08005", reg[1] IS NOT NULL AND reg[1] == 1)
     CALL reg.clear()
-    LET reg[1] = 15
-    LET r = eval_operator(ET_OPER_DIV, reg)
-    TEST_ASSERT("test_oper.09001", r==EE_INVALID_OPERANDS )
+    LET reg[1] = 1
+    LET reg[2] = 0
+    LET r = eval_operator(ET_OPER_AND, reg)
+    TEST_ASSERT("test_oper.08011", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.08015", reg[1] IS NOT NULL AND reg[1] == 0)
+    CALL reg.clear()
+    LET reg[1] = 0
+    LET reg[2] = 0
+    LET r = eval_operator(ET_OPER_AND, reg)
+    TEST_ASSERT("test_oper.08021", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.08025", reg[1] IS NOT NULL AND reg[1] == 0)
+
+    CALL reg.clear()
+    LET reg[1] = 1
+    LET reg[2] = 1
+    LET r = eval_operator(ET_OPER_OR, reg)
+    TEST_ASSERT("test_oper.08101", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.08105", reg[1] IS NOT NULL AND reg[1] == 1)
+    CALL reg.clear()
+    LET reg[1] = 1
+    LET reg[2] = 0
+    LET r = eval_operator(ET_OPER_OR, reg)
+    TEST_ASSERT("test_oper.08111", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.08115", reg[1] IS NOT NULL AND reg[1] == 1)
+    CALL reg.clear()
+    LET reg[1] = 0
+    LET reg[2] = 0
+    LET r = eval_operator(ET_OPER_OR, reg)
+    TEST_ASSERT("test_oper.08121", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.08125", reg[1] IS NOT NULL AND reg[1] == 0)
+
+    CALL reg.clear()
+    LET reg[1] = 1
+    LET r = eval_operator(ET_OPER_NOT, reg)
+    TEST_ASSERT("test_oper.08201", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.08205", reg[1] IS NOT NULL AND reg[1] == 0)
+    CALL reg.clear()
+    LET reg[1] = 0
+    LET r = eval_operator(ET_OPER_NOT, reg)
+    TEST_ASSERT("test_oper.08211", r==0 AND reg.getLength()==1)
+    TEST_ASSERT("test_oper.08215", reg[1] IS NOT NULL AND reg[1] == 1)
 
 END FUNCTION
 
@@ -610,9 +660,14 @@ PRIVATE FUNCTION eval_operator(op,reg)
     DEFINE op t_elem_type,
            reg DYNAMIC ARRAY OF t_number
     DEFINE xl,xr SMALLINT,
-           r INTEGER
+           r, oc INTEGER
     LET xr = reg.getLength()
-    IF xr < 2 THEN
+    IF op==ET_OPER_NOT THEN
+       LET oc=1
+    ELSE
+       LET oc=2
+    END IF
+    IF xr < oc THEN
        RETURN EE_INVALID_OPERANDS
     END IF
     TRY
@@ -643,6 +698,12 @@ PRIVATE FUNCTION eval_operator(op,reg)
            LET reg[xl] = (reg[xl] < reg[xr])
          WHEN ET_OPER_LOW_EQL
            LET reg[xl] = (reg[xl] <= reg[xr])
+         WHEN ET_OPER_AND
+           LET reg[xl] = (reg[xl] AND reg[xr])
+         WHEN ET_OPER_OR
+           LET reg[xl] = (reg[xl] OR reg[xr])
+         WHEN ET_OPER_NOT
+           LET reg[xr] = NOT (reg[xr])
          OTHERWISE
            ASSERT(FALSE)
        END CASE
@@ -653,7 +714,9 @@ PRIVATE FUNCTION eval_operator(op,reg)
          OTHERWISE  LET r = EE_OPERATOR_ERROR
        END CASE
     END TRY
-    CALL reg.deleteElement(xr)
+    IF oc == 2 THEN
+       CALL reg.deleteElement(xr)
+    END IF
     RETURN r
 END FUNCTION
 
@@ -685,12 +748,8 @@ PRIVATE FUNCTION test_output()
 
     LET r = output_add_number(-111.111)
     TEST_ASSERT("test_output.02001", r AND out[1].type = ET_VALUE AND out[1].value IS NOT NULL AND out[1].value==-111.111)
-    LET r = output_add_operator(ET_OPER_ADD)
-    TEST_ASSERT("test_output.02002", r AND out[2].type = ET_OPER_ADD AND out[2].value IS NULL)
-    LET r = output_add_control(ET_LEFT_BRACE)
-    TEST_ASSERT("test_output.02003", r AND out[3].type = ET_LEFT_BRACE AND out[2].value IS NULL)
     LET r = output_add_function(FN_SIN)
-    TEST_ASSERT("test_output.02004", r AND out[4].type = ET_FUNCTION AND out[3].name==FN_SIN )
+    TEST_ASSERT("test_output.02003", r AND out[4].type = ET_FUNCTION AND out[3].name==FN_SIN )
 
     CALL output_clear()
     TEST_ASSERT("test_output.09001", out.getLength()==0 )
@@ -710,56 +769,32 @@ PRIVATE FUNCTION output_add(elem)
     LET out[x].* = elem.*
 END FUNCTION
 
-PRIVATE FUNCTION check_operator(token)
-    DEFINE token STRING
-    CASE token
-      WHEN ET_OPER_EXP     RETURN TRUE
-      WHEN ET_OPER_ADD     RETURN TRUE
-      WHEN ET_OPER_SUB     RETURN TRUE
-      WHEN ET_OPER_DIV     RETURN TRUE
-      WHEN ET_OPER_MUL     RETURN TRUE
-      WHEN ET_OPER_UNA_MIN RETURN TRUE
-      WHEN ET_OPER_UNA_PLS RETURN TRUE
-      WHEN ET_OPER_EQL     RETURN TRUE
-      WHEN ET_OPER_NEQ     RETURN TRUE
-      WHEN ET_OPER_GRE     RETURN TRUE
-      WHEN ET_OPER_GRE_EQL RETURN TRUE
-      WHEN ET_OPER_LOW     RETURN TRUE
-      WHEN ET_OPER_LOW_EQL RETURN TRUE
-      OTHERWISE            RETURN FALSE
+PRIVATE FUNCTION operator_operands(elem_type)
+    DEFINE elem_type t_elem_type
+    CASE elem_type
+      WHEN ET_OPER_EXP     RETURN 2
+      WHEN ET_OPER_ADD     RETURN 2
+      WHEN ET_OPER_SUB     RETURN 2
+      WHEN ET_OPER_DIV     RETURN 2
+      WHEN ET_OPER_MUL     RETURN 2
+      WHEN ET_OPER_UNA_MIN RETURN 1
+      WHEN ET_OPER_UNA_PLS RETURN 1
+      WHEN ET_OPER_EQL     RETURN 2
+      WHEN ET_OPER_NEQ     RETURN 2
+      WHEN ET_OPER_GRE     RETURN 2
+      WHEN ET_OPER_GRE_EQL RETURN 2
+      WHEN ET_OPER_LOW     RETURN 2
+      WHEN ET_OPER_LOW_EQL RETURN 2
+      WHEN ET_OPER_AND     RETURN 2
+      WHEN ET_OPER_OR      RETURN 2
+      WHEN ET_OPER_NOT     RETURN 1
+      OTHERWISE            RETURN 0
     END CASE
 END FUNCTION
 
-PRIVATE FUNCTION output_add_operator(oper)
-    DEFINE oper t_elem_type
-    DEFINE elem t_element
-    IF NOT check_operator(oper) THEN
-       RETURN FALSE
-    END IF
-    LET elem.type = oper
-    CALL output_add(elem.*)
-    RETURN TRUE
-END FUNCTION
-
-PRIVATE FUNCTION check_control(token)
-    DEFINE token STRING
-    CASE token
-      WHEN ET_LEFT_BRACE  RETURN TRUE
-      WHEN ET_RIGHT_BRACE RETURN TRUE
-      WHEN ET_COMMA       RETURN TRUE
-      OTHERWISE           RETURN FALSE
-    END CASE
-END FUNCTION
-
-PRIVATE FUNCTION output_add_control(cont)
-    DEFINE cont t_elem_type
-    DEFINE elem t_element
-    IF NOT check_control(cont) THEN
-       RETURN FALSE
-    END IF
-    LET elem.type = cont
-    CALL output_add(elem.*)
-    RETURN TRUE
+PRIVATE FUNCTION check_operator(elem_type)
+    DEFINE elem_type t_elem_type
+    RETURN ( operator_operands(elem_type) > 0 )
 END FUNCTION
 
 PRIVATE FUNCTION check_function(token)
@@ -866,9 +901,6 @@ END FUNCTION
 PRIVATE FUNCTION stack_push_operator(oper)
     DEFINE oper t_elem_type
     DEFINE elem t_element
-    IF NOT check_operator(oper) THEN
-       RETURN FALSE
-    END IF
     LET elem.type = oper
     CALL _stack_push(elem.*)
     RETURN TRUE
@@ -877,9 +909,6 @@ END FUNCTION
 PRIVATE FUNCTION stack_push_control(cont)
     DEFINE cont t_elem_type
     DEFINE elem t_element
-    IF NOT check_control(cont) THEN
-       RETURN FALSE
-    END IF
     LET elem.type = cont
     CALL _stack_push(elem.*)
     RETURN TRUE
@@ -909,7 +938,8 @@ PRIVATE FUNCTION stack_pop()
            x INTEGER
     LET x = stk.getLength()
     IF x == 0 THEN
-       RETURN elem.* -- elem.type NULL means no more elements
+       LET elem.type = NULL -- no more elements
+       RETURN elem.*
     END IF
     LET elem.* = stk[x].*
     CALL stk.deleteElement(x)
@@ -945,9 +975,9 @@ PRIVATE FUNCTION test_eval()
     CALL evaluate("(+4)") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.01005",s, s==0 AND NVL(v,0)==4.0)
     CALL evaluate("-4 - 2 + 2 - 3") RETURNING s, v
-    TEST_ASSERT_EVAL("test_evaluate.01003",s, s==0 AND NVL(v,0)==-7.0)
+    TEST_ASSERT_EVAL("test_evaluate.01006",s, s==0 AND NVL(v,0)==-7.0)
     CALL evaluate("Pi") RETURNING s, v
-    TEST_ASSERT_EVAL("test_evaluate.01004",s, s==0 AND NVL(v,0)==3.141592653589793)
+    TEST_ASSERT_EVAL("test_evaluate.01007",s, s==0 AND NVL(v,0)==3.141592653589793238462643383279)
 
     CALL evaluate("x1") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.01106",s, s==0 AND NVL(v,0)==15.0)
@@ -1052,6 +1082,50 @@ PRIVATE FUNCTION test_eval()
     CALL evaluate(" 5>2*2 + 4==2*2") RETURNING s, v -- (5>(2*2+4)) == (2*2)
     TEST_ASSERT_EVAL("test_evaluate.10101",s, s==0 AND NVL(v,0)==0.0)
 
+    CALL evaluate("1 and 0") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.11001",s, s==0 AND NVL(v,0)==0.0)
+    CALL evaluate("1 and 1") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.11002",s, s==0 AND NVL(v,0)==1.0)
+    CALL evaluate("0 and 1") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.11003",s, s==0 AND NVL(v,0)==0.0)
+    CALL evaluate("0 and 0") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.11004",s, s==0 AND NVL(v,0)==0.0)
+
+    CALL evaluate("1 or 0") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.11101",s, s==0 AND NVL(v,0)==1.0)
+    CALL evaluate("1 or 1") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.11102",s, s==0 AND NVL(v,0)==1.0)
+    CALL evaluate("0 or 1") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.11103",s, s==0 AND NVL(v,0)==1.0)
+    CALL evaluate("0 or 0") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.11104",s, s==0 AND NVL(v,0)==0.0)
+
+    CALL evaluate("1 or 0 and 1 or 0") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.11101",s, s==0 AND NVL(v,0)==1.0)
+    CALL evaluate("1 and 0 or 1 and 0") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.11102",s, s==0 AND NVL(v,0)==0.0)
+
+    CALL evaluate("not 1") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.12001",s, s==0 AND NVL(v,0)==0.0)
+    CALL evaluate("not 0") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.12002",s, s==0 AND NVL(v,0)==1.0)
+    CALL evaluate("not 0 or 1") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.12003",s, s==0 AND NVL(v,0)==1.0)
+    CALL evaluate("not 1 or 0") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.12004",s, s==0 AND NVL(v,0)==0.0)
+    CALL evaluate("not 1 and 1") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.12005",s, s==0 AND NVL(v,0)==0.0)
+    CALL evaluate("not 0 and 1") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.12006",s, s==0 AND NVL(v,0)==1.0)
+    CALL evaluate("not 0 + 1") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.12007",s, s==0 AND NVL(v,0)==0.0)
+    CALL evaluate("not (0 + 1)") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.12008",s, s==0 AND NVL(v,0)==0.0)
+    CALL evaluate("(not 0) + 1") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.12009",s, s==0 AND NVL(v,0)==2.0)
+    CALL evaluate("(not 1 or 2) + 5 / 100") RETURNING s, v
+    TEST_ASSERT_EVAL("test_evaluate.12010",s, s==0 AND NVL(v,0)==1.05)
+
     -- Errors
 
     CALL evaluate("-") RETURNING s, v
@@ -1141,30 +1215,32 @@ END FUNCTION
 
 &endif
 
-PRIVATE FUNCTION unary_candidate(token, last_token)
-    DEFINE token, last_token STRING
+PRIVATE FUNCTION unary_candidate(token, last_elem_type)
+    DEFINE token, last_elem_type STRING
     IF token=="-" OR token=="+" THEN
-       IF last_token IS NULL
-       OR last_token == "*"
-       OR last_token == "/"
-       OR last_token == "+"
-       OR last_token == "-"
-       OR last_token == "=="
-       OR last_token == "!="
-       OR last_token == "<"
-       OR last_token == "<="
-       OR last_token == ">"
-       OR last_token == ">="
-       OR last_token == "("
-       THEN
-          RETURN TRUE
-       END IF
+       RETURN (
+          last_elem_type == 0
+       OR last_elem_type == ET_OPER_MUL
+       OR last_elem_type == ET_OPER_DIV
+       OR last_elem_type == ET_OPER_ADD
+       OR last_elem_type == ET_OPER_SUB
+       OR last_elem_type == ET_OPER_EQL
+       OR last_elem_type == ET_OPER_NEQ
+       OR last_elem_type == ET_OPER_LOW
+       OR last_elem_type == ET_OPER_LOW_EQL
+       OR last_elem_type == ET_OPER_GRE
+       OR last_elem_type == ET_OPER_GRE_EQL
+       OR last_elem_type == ET_OPER_AND
+       OR last_elem_type == ET_OPER_OR
+       OR last_elem_type == ET_OPER_NOT
+       OR last_elem_type == ET_LEFT_BRACE
+       )
     END IF
     RETURN FALSE
 END FUNCTION
 
 PRIVATE FUNCTION predefine_constants()
-    CALL setVariable("Pi",util.Math.pi())
+    CALL setVariable("Pi", 3.1415926535897932384626433832795) -- util.Math.pi())
     CALL setVariable("Euler",2.7182818284)
     CALL setVariable("Golden",1.6180339887498948482)
 END FUNCTION
@@ -1200,6 +1276,37 @@ display sfmt("res: (status:%1) %2", r, value)
     RETURN r, value
 END FUNCTION
 
+PRIVATE FUNCTION token_to_elem_type(tokid, token, next_tokid, next_token)
+    DEFINE tokid SMALLINT, token STRING,
+           next_tokid SMALLINT, next_token STRING
+    IF tokid==SL_TOKID_OTHER THEN
+       CASE
+         WHEN token=="*" AND next_tokid==SL_TOKID_OTHER AND next_token=="*" RETURN ET_OPER_EXP, 2
+         WHEN token=="=" AND next_tokid==SL_TOKID_OTHER AND next_token=="=" RETURN ET_OPER_EQL, 2
+         WHEN token=="!" AND next_tokid==SL_TOKID_OTHER AND next_token=="=" RETURN ET_OPER_NEQ, 2
+         WHEN token=="<" AND next_tokid==SL_TOKID_OTHER AND next_token=="=" RETURN ET_OPER_LOW_EQL, 2
+         WHEN token==">" AND next_tokid==SL_TOKID_OTHER AND next_token=="=" RETURN ET_OPER_GRE_EQL, 2
+         WHEN token=="+" RETURN ET_OPER_ADD, 1
+         WHEN token=="-" RETURN ET_OPER_SUB, 1
+         WHEN token=="/" RETURN ET_OPER_DIV, 1
+         WHEN token=="*" RETURN ET_OPER_MUL, 1
+         WHEN token==">" RETURN ET_OPER_GRE, 1
+         WHEN token=="<" RETURN ET_OPER_LOW, 1
+         WHEN token=="(" RETURN ET_LEFT_BRACE, 1
+         WHEN token==")" RETURN ET_RIGHT_BRACE, 1
+         WHEN token=="," RETURN ET_COMMA, 1
+       END CASE
+    END IF
+    IF tokid==SL_TOKID_IDENT THEN
+       CASE
+         WHEN token=="and" RETURN ET_OPER_AND, 1
+         WHEN token=="or"  RETURN ET_OPER_OR, 1
+         WHEN token=="not" RETURN ET_OPER_NOT, 1
+       END CASE
+    END IF
+    RETURN NULL, 0
+END FUNCTION
+
 PRIVATE FUNCTION prepare(expr)
     DEFINE expr STRING
     DEFINE buf base.StringBuffer,
@@ -1207,8 +1314,10 @@ PRIVATE FUNCTION prepare(expr)
            pos INTEGER, tokid SMALLINT, token STRING,
            last_pos INTEGER, last_tokid SMALLINT, last_token STRING,
            next_pos INTEGER, next_tokid SMALLINT, next_token STRING,
+           elem_type t_elem_type,
+           last_elem_type t_elem_type,
            value t_number,
-           s SMALLINT
+           nbtokens, s SMALLINT
 &ifdef DEBUG
 display "\nin : ", expr
 &endif
@@ -1222,110 +1331,99 @@ display "\nin : ", expr
           LET last_pos = pos
           LET last_tokid = tokid
           LET last_token = token
+          LET last_elem_type = elem_type
        END IF
        CALL liblexer.getNextToken(buf,pos,TRUE) RETURNING tokid,pos,token
        CALL liblexer.getNextToken(buf,pos,TRUE) RETURNING next_tokid,next_pos,next_token
 &ifdef DEBUG
-display "pos=", pos USING "##&", " tid=", tokid USING "---&", " token=[", token, "]", column 50, "last: [", last_token, "]"
+display "pos=", pos USING "##&", " tid=", tokid USING "---&", " token:[", token, "]", column 60, "last:[", last_token, "]", column 90, "next:[", next_token,"]"
 &endif
        IF tokid<0 THEN
           RETURN tokid
        END IF
 
-       CASE tokid
+       IF tokid==SL_TOKID_END THEN
+          EXIT WHILE
+       END IF
 
-         WHEN SL_TOKID_END
-           EXIT WHILE
+       IF tokid==SL_TOKID_OTHER AND unary_candidate(token,last_elem_type) THEN
+          IF token=="-" THEN
+             LET s = stack_push_operator(ET_OPER_UNA_MIN)
+          ELSE
+             LET s = stack_push_operator(ET_OPER_UNA_PLS)
+          END IF
+          CONTINUE WHILE
+       END IF
 
-         WHEN SL_TOKID_STRING
-           RETURN EE_SYNTAX_ERROR
+       CALL token_to_elem_type(tokid, token, next_tokid, next_token) RETURNING elem_type, nbtokens
+       IF nbtokens==2 THEN
+          LET pos = next_pos
+          LET tokid = next_tokid
+          LET token = next_token
+       END IF
 
-         WHEN SL_TOKID_NUMBER
-           LET value = to_decimal(token)
-           IF value IS NULL THEN
-              RETURN EE_INVALID_NUMBER
-           ELSE
-              LET s = output_add_number(value)
-           END IF
-
-         WHEN SL_TOKID_IDENT
-           IF next_tokid==SL_TOKID_OTHER AND next_token==ET_LEFT_BRACE THEN
-              IF NOT stack_push_function(token) THEN
-                 RETURN EE_INVALID_FUNCTION
-              END IF
-           ELSE
-              LET value = getVariable(token)
+       IF elem_type IS NULL THEN
+          CASE
+            WHEN tokid==SL_TOKID_STRING
+              RETURN EE_SYNTAX_ERROR
+            WHEN tokid==SL_TOKID_NUMBER
+              LET value = to_decimal(token)
               IF value IS NULL THEN
-                 RETURN EE_UNDEFINED_VARIABLE
+                 RETURN EE_INVALID_NUMBER
               ELSE
                  LET s = output_add_number(value)
               END IF
-           END IF
-
-         WHEN SL_TOKID_OTHER
-
-           -- Unary plus/minus handling
-           IF unary_candidate(token,last_token) THEN
-              IF token=="-" THEN
-                 LET s = stack_push_operator(ET_OPER_UNA_MIN)
-              ELSE
-                 LET s = stack_push_operator(ET_OPER_UNA_PLS)
+            WHEN tokid==SL_TOKID_IDENT
+              IF next_tokid==SL_TOKID_OTHER AND next_token=="(" THEN
+                 IF NOT stack_push_function(token) THEN
+                    RETURN EE_INVALID_FUNCTION
+                 END IF
+              ELSE -- Variable
+                 LET value = getVariable(token)
+                 IF value IS NULL THEN
+                    RETURN EE_UNDEFINED_VARIABLE
+                 ELSE
+                    LET s = output_add_number(value)
+                 END IF
               END IF
-              CONTINUE WHILE
-           END IF
-
-           -- Join tokens for operators like <= >= != ...
-           IF token=="*" AND next_token=="*"
-           OR token=="=" AND next_token=="="
-           OR token=="!" AND next_token=="="
-           OR token=="<" AND next_token=="="
-           OR token==">" AND next_token=="="
-           THEN
-              LET token = token,next_token
-              LET next_token = NULL
-              LET pos = next_pos
-              LET next_pos = NULL
-           END IF
-
-           CASE
-
-             WHEN token==ET_COMMA
-               LET s = pop_stack_to_output_until(ET_LEFT_BRACE)
-               IF s<0 THEN RETURN s END IF
-
-             WHEN check_operator(token)
-               IF last_token IS NULL
-               OR check_operator(last_token)
-               OR last_token==ET_LEFT_BRACE THEN
-                  RETURN EE_SYNTAX_ERROR
-               END IF
-               LET s = pop_operators_to_output(token)
-               IF s<0 THEN RETURN s END IF
-               LET s = stack_push_operator(token)
-
-             WHEN token==ET_LEFT_BRACE
-               LET s = stack_push_control(token)
-
-             WHEN token==ET_RIGHT_BRACE
-               IF last_token IS NULL
-               OR check_operator(last_token)
-               OR last_token==ET_LEFT_BRACE
-               OR last_token==ET_COMMA THEN
-                  RETURN EE_SYNTAX_ERROR
-               END IF
-               LET s = pop_stack_to_output_until(ET_LEFT_BRACE)
-               IF s<0 THEN RETURN s END IF
-               CALL stack_pop_trash()
-               IF stack_next_type()==ET_FUNCTION THEN
-                  CALL pop_stack_to_output()
-               END IF
-
-             OTHERWISE
-               RETURN EE_SYNTAX_ERROR
-
-           END CASE
-
-       END CASE
+            OTHERWISE
+              RETURN EE_SYNTAX_ERROR
+          END CASE
+       ELSE
+          CASE
+            WHEN elem_type==ET_COMMA
+              LET s = pop_stack_to_output_until(ET_LEFT_BRACE)
+              IF s<0 THEN RETURN s END IF
+            WHEN check_operator(elem_type)
+              IF operator_operands(elem_type) > 1
+                 AND (last_elem_type == 0
+                      OR check_operator(last_elem_type)
+                      OR last_elem_type==ET_LEFT_BRACE)
+              THEN
+                 RETURN EE_SYNTAX_ERROR
+              END IF
+              LET s = pop_operators_to_output(elem_type)
+              IF s<0 THEN RETURN s END IF
+              LET s = stack_push_operator(elem_type)
+            WHEN elem_type==ET_LEFT_BRACE
+              LET s = stack_push_control(elem_type)
+            WHEN elem_type==ET_RIGHT_BRACE
+              IF last_elem_type == 0
+              OR check_operator(last_elem_type)
+              OR last_elem_type==ET_LEFT_BRACE
+              OR last_elem_type==ET_COMMA THEN
+                 RETURN EE_SYNTAX_ERROR
+              END IF
+              LET s = pop_stack_to_output_until(ET_LEFT_BRACE)
+              IF s<0 THEN RETURN s END IF
+              CALL stack_pop_trash()
+              IF stack_next_type()==ET_FUNCTION THEN
+                 CALL pop_stack_to_output()
+              END IF
+            OTHERWISE
+              RETURN EE_SYNTAX_ERROR
+          END CASE
+       END IF
 
 &ifdef DEBUG
 display "      output: ", util.JSON.stringify(out)
@@ -1337,6 +1435,10 @@ display "      --------"
 
     LET s = pop_stack_to_output_to_end()
     IF s<0 THEN RETURN s END IF
+
+&ifdef DEBUG
+display " last output: ", util.JSON.stringify(out)
+&endif
 
     RETURN 0
 
@@ -1419,6 +1521,7 @@ PRIVATE FUNCTION left_associative(oper)
     DEFINE oper t_elem_type
     CASE oper
       WHEN ET_OPER_EXP       RETURN FALSE
+      WHEN ET_OPER_NOT       RETURN FALSE
       OTHERWISE              RETURN TRUE
     END CASE
 END FUNCTION
@@ -1426,19 +1529,22 @@ END FUNCTION
 PRIVATE FUNCTION precedence_index(oper)
     DEFINE oper t_elem_type
     CASE oper
-      WHEN ET_OPER_UNA_MIN   RETURN 5
-      WHEN ET_OPER_UNA_PLS   RETURN 5
-      WHEN ET_OPER_EXP       RETURN 4
-      WHEN ET_OPER_MUL       RETURN 3
-      WHEN ET_OPER_DIV       RETURN 3
-      WHEN ET_OPER_ADD       RETURN 2
-      WHEN ET_OPER_SUB       RETURN 2
-      WHEN ET_OPER_EQL       RETURN 1
-      WHEN ET_OPER_NEQ       RETURN 1
-      WHEN ET_OPER_GRE       RETURN 1
-      WHEN ET_OPER_GRE_EQL   RETURN 1
-      WHEN ET_OPER_LOW       RETURN 1
-      WHEN ET_OPER_LOW_EQL   RETURN 1
+      WHEN ET_OPER_UNA_MIN   RETURN 8
+      WHEN ET_OPER_UNA_PLS   RETURN 8
+      WHEN ET_OPER_EXP       RETURN 7
+      WHEN ET_OPER_MUL       RETURN 6
+      WHEN ET_OPER_DIV       RETURN 6
+      WHEN ET_OPER_ADD       RETURN 5
+      WHEN ET_OPER_SUB       RETURN 5
+      WHEN ET_OPER_EQL       RETURN 4
+      WHEN ET_OPER_NEQ       RETURN 4
+      WHEN ET_OPER_GRE       RETURN 4
+      WHEN ET_OPER_GRE_EQL   RETURN 4
+      WHEN ET_OPER_LOW       RETURN 4
+      WHEN ET_OPER_LOW_EQL   RETURN 4
+      WHEN ET_OPER_NOT       RETURN 3
+      WHEN ET_OPER_AND       RETURN 2
+      WHEN ET_OPER_OR        RETURN 1
       OTHERWISE              ASSERT(FALSE)
     END CASE
 END FUNCTION
