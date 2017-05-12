@@ -32,6 +32,42 @@ MAIN
         CALL sync_var_list()
         CALL sync_var_fields(DIALOG.getCurrentRow("sr"))
 
+    ON ACTION n_0       CALL append("0",FALSE)
+    ON ACTION n_1       CALL append("1",FALSE)
+    ON ACTION n_2       CALL append("2",FALSE)
+    ON ACTION n_3       CALL append("3",FALSE)
+    ON ACTION n_4       CALL append("4",FALSE)
+    ON ACTION n_5       CALL append("5",FALSE)
+    ON ACTION n_6       CALL append("6",FALSE)
+    ON ACTION n_7       CALL append("7",FALSE)
+    ON ACTION n_8       CALL append("8",FALSE)
+    ON ACTION n_9       CALL append("9",FALSE)
+    ON ACTION n_dot     CALL append(".",FALSE)
+    ON ACTION oper_add  CALL append("+",TRUE)
+    ON ACTION oper_sub  CALL append("-",TRUE)
+    ON ACTION oper_mul  CALL append("*",TRUE)
+    ON ACTION oper_div  CALL append("/",TRUE)
+    ON ACTION oper_exp  CALL append("**",TRUE)
+    ON ACTION oper_cbr  CALL append(")",TRUE)
+    ON ACTION clear     LET rec.input = NULL
+    ON ACTION f_sin     CALL append("sin(",TRUE)
+    ON ACTION f_asin    CALL append("asin(",TRUE)
+    ON ACTION f_cos     CALL append("cos(",TRUE)
+    ON ACTION f_acos    CALL append("acos(",TRUE)
+    ON ACTION f_tan     CALL append("tan(",TRUE)
+    ON ACTION f_atan    CALL append("atan(",TRUE)
+    ON ACTION f_min     CALL append("min(",TRUE)
+    ON ACTION f_max     CALL append("max(",TRUE)
+    ON ACTION f_sqrt    CALL append("sqrt(",TRUE)
+    ON ACTION f_exp     CALL append("exp(",TRUE)
+    ON ACTION f_logn    CALL append("logn(",TRUE)
+    ON ACTION f_mod     CALL append("mod(",TRUE)
+    ON ACTION f_rand    CALL append("rand(",TRUE)
+    ON ACTION f_rad     CALL append("rad(",TRUE)
+    ON ACTION f_deg     CALL append("deg(",TRUE)
+    ON ACTION f_iif     CALL append("iif(",TRUE)
+    ON ACTION f_abs     CALL append("abs(",TRUE)
+
     ON ACTION set_variable ATTRIBUTES(ACCELERATOR="Control-S")
        IF rec.var_name IS NOT NULL AND rec.var_value IS NOT NULL THEN
           CALL libformula.setVariable( rec.var_name,  rec.var_value )
@@ -55,6 +91,27 @@ MAIN
     CALL libformula.finalize()
 
 END MAIN
+
+FUNCTION append(p,s)
+    DEFINE p STRING, s BOOLEAN
+    DEFINE b base.StringBuffer,
+           c, l SMALLINT
+    IF s THEN
+       LET p = " ", p, " "
+    END IF
+    LET b = base.StringBuffer.create()
+    LET l = rec.input.getLength()
+    LET c = fgl_dialog_getselectionend()
+    CALL b.append(rec.input)
+    IF c<l THEN
+       CALL b.insertAt(c, p)
+    ELSE
+       CALL b.append(p)
+    END IF
+    LET rec.input = b.toString()
+    LET c = c + p.getLength()
+    CALL fgl_dialog_setselection( c, c )
+END FUNCTION
 
 FUNCTION sync_var_fields(x)
     DEFINE x INTEGER
