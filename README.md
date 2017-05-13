@@ -65,7 +65,7 @@ Example:
  `` >= `` | Greater or equal to
  `` and ``| Logical AND ( 1 and 0 = 0 )
  `` or  ``| Logical OR ( 1 or 0 = 1 )
- `` not ``| Logical NOR ( not 1 = 0 )
+ `` not ``| Logical NOT ( not 1 = 0 )
 
 
 ### Functions

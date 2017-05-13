@@ -11,14 +11,14 @@ GRID
 [                                         ] [c1    |c2          ]
 [n_7   |n_8   |n_9   |b_add |b_sub |b_mul ] [c1    |c2          ]
 [n_4   |n_5   |n_6   |b_div |b_exp |b_cls ] [c1    |c2          ]
-[n_1   |n_2   |n_3   |b_cbr |b_004 |b_005 ] [c1    |c2          ]
-[n_0   |n_dot |b_002 |b_006 |b_007 |b_008 ] [c1    |c2          ]
+[n_1   |n_2   |n_3   |b_cbr |b_001 |b_002 ] [c1    |c2          ]
+[n_0   |n_dot |b_003 |b_and |b_or  |b_not ] [c1    |c2          ]
 [f_sin |f_asin|f_cos |f_acos|f_tan |f_atan] [c1    |c2          ]
 [f_min |f_max |f_sqrt|f_exp |f_logn|f_mod ] [c1    |c2          ]
-[f_rand|f_rad |f_deg |f_iif |f_abs |b_001 ] [c1    |c2          ]
+[f_rand|f_rad |f_deg |f_iif |f_abs |b_004 ] [c1    |c2          ]
 [comp                                     ] <                   >
 Status: [sta                              ] [vn    ]=[vv        ]
-Message:[msg                              ] [vset -:     :vclr -]
+Message:[msg                              ] [cpre-:vset -:vclr -]
 Result: [res                              ]<                     >
 }
 END
@@ -41,6 +41,9 @@ BUTTON b_mul: oper_mul, TEXT="*";
 BUTTON b_div: oper_div, TEXT="/";
 BUTTON b_exp: oper_exp, TEXT="**";
 BUTTON b_cbr: oper_cbr, TEXT=")";
+BUTTON b_and: oper_and, TEXT="and";
+BUTTON b_or : oper_or , TEXT="or";
+BUTTON b_not: oper_not, TEXT="not";
 BUTTON b_cls: clear, TEXT="Clear";
 BUTTON f_sin : f_sin , TEXT="sin()";
 BUTTON f_asin: f_asin, TEXT="asin()";
@@ -61,20 +64,18 @@ BUTTON f_iif : f_iif , TEXT="iif()";
 BUTTON f_abs : f_abs , TEXT="abs()";
 BUTTON b_001 : b_001 , TEXT="";
 BUTTON b_002 : b_002 , TEXT="";
+BUTTON b_003 : b_003 , TEXT="";
 BUTTON b_004 : b_004 , TEXT="";
-BUTTON b_005 : b_005 , TEXT="";
-BUTTON b_006 : b_006 , TEXT="";
-BUTTON b_007 : b_007 , TEXT="";
-BUTTON b_008 : b_008 , TEXT="";
 BUTTON comp: eval, TEXT="Compute";
 EDIT sta = FORMONLY.status, COLOR=RED;
-EDIT msg = FORMONLY.message, COLOR=RED;
+EDIT msg = FORMONLY.message, COLOR=RED, SCROLL;
 EDIT res = FORMONLY.result, COLOR=BLUE, SCROLL;
 GROUP g1: group1, TEXT="Variables";
 c1 = FORMONLY.col_vn, SCROLL;
 c2 = FORMONLY.col_vv, SCROLL;
 EDIT vn = FORMONLY.var_name, SCROLL;
 EDIT vv = FORMONLY.var_value, SCROLL;
+BUTTON cpre: copy_result, TEXT="CpRes";
 BUTTON vset: set_variable, TEXT="Set";
 BUTTON vclr: clr_variable, TEXT="Clear";
 END

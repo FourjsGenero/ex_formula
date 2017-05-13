@@ -49,6 +49,9 @@ MAIN
     ON ACTION oper_div  CALL append("/",TRUE)
     ON ACTION oper_exp  CALL append("**",TRUE)
     ON ACTION oper_cbr  CALL append(")",TRUE)
+    ON ACTION oper_and  CALL append("and",TRUE)
+    ON ACTION oper_or   CALL append("or",TRUE)
+    ON ACTION oper_not  CALL append("not",TRUE)
     ON ACTION clear     LET rec.input = NULL
     ON ACTION f_sin     CALL append("sin(",TRUE)
     ON ACTION f_asin    CALL append("asin(",TRUE)
@@ -68,11 +71,20 @@ MAIN
     ON ACTION f_iif     CALL append("iif(",TRUE)
     ON ACTION f_abs     CALL append("abs(",TRUE)
 
+    ON ACTION copy_result ATTRIBUTES(ACCELERATOR="Control-U")
+       IF rec.result IS NOT NULL THEN
+          LET rec.var_value = rec.result
+          LET rec.var_name = SFMT("result_%1",varlist.getLength()+1)
+          CALL libformula.setVariable( rec.var_name,  rec.var_value )
+          CALL sync_var_list()
+       END IF
+
     ON ACTION set_variable ATTRIBUTES(ACCELERATOR="Control-S")
        IF rec.var_name IS NOT NULL AND rec.var_value IS NOT NULL THEN
           CALL libformula.setVariable( rec.var_name,  rec.var_value )
           CALL sync_var_list()
        END IF
+
     ON ACTION clr_variable ATTRIBUTES(ACCELERATOR="Control-D")
        IF rec.var_name IS NOT NULL THEN
           CALL libformula.clearVariable( rec.var_name )
@@ -95,22 +107,36 @@ END MAIN
 FUNCTION append(p,s)
     DEFINE p STRING, s BOOLEAN
     DEFINE b base.StringBuffer,
-           c, l SMALLINT
+           sels,sele,tmp, ilen SMALLINT
     IF s THEN
        LET p = " ", p, " "
     END IF
     LET b = base.StringBuffer.create()
-    LET l = rec.input.getLength()
-    LET c = fgl_dialog_getselectionend()
+    LET ilen = rec.input.getLength()
+    LET sels = fgl_dialog_getcursor()
+    LET sele = fgl_dialog_getselectionend()
+    IF sels > sele THEN
+       LET tmp = sele
+       LET sele = sels
+       LET sels = tmp
+    END IF
     CALL b.append(rec.input)
-    IF c<l THEN
-       CALL b.insertAt(c, p)
+    IF sels==sele THEN
+       IF sels <= ilen THEN
+          CALL b.insertAt(sels, p)
+          LET sels = sels + p.getLength()
+          LET sele = sels
+       ELSE
+          CALL b.append(p)
+          LET sels = b.getLength() + 1
+          LET sele = sels
+       END IF
     ELSE
-       CALL b.append(p)
+       CALL b.replaceAt(sels, (sele-sels), p)
+       LET sele = sels + p.getLength()
     END IF
     LET rec.input = b.toString()
-    LET c = c + p.getLength()
-    CALL fgl_dialog_setselection( c, c )
+    CALL fgl_dialog_setselection( sels, sele )
 END FUNCTION
 
 FUNCTION sync_var_fields(x)
