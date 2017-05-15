@@ -17,11 +17,15 @@ all: $(PROGMOD) $(FORMS)
 run:: all
 	fglrun formula_demo.42m
 
-test::
-	fglcomp -D TEST -M libformula.4gl
+test-libformula::
+	fglcomp -D TEST -D DEBUG -M libformula.4gl
 	mv libformula.42m libformula_test.42m
-	fglcomp -M libformula.4gl
 	fglrun libformula_test.42m
+
+test-liblexer::
+	fglcomp -D TEST -D DEBUG -M liblexer.4gl
+	mv liblexer.42m liblexer_test.42m
+	fglrun liblexer_test.42m
 
 clean::
 	rm -f *.42?

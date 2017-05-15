@@ -40,8 +40,8 @@ decimal separator.
 
 ### Basics
 
-The syntax supported by the libformla.4gl library is similar to the Genero BDL
-expression syntax, using numbers, operators, functions and variables.
+The syntax supported by the libformla.4gl library is a typical expression
+syntax, using number constants, operators, functions and user variables.
 
 Example:
 ``
@@ -93,11 +93,13 @@ Example:
 
 ## Programmer's reference: libformula.4gl
 
-### No-regression tests
+### Non-regression tests
 
 The libformula.4gl code implements non-regression tests that can be
-enabled when compiling with the -D TEST option, try: `` make test ``
-Use -D DEBUG to get output.
+enabled when compiling with the -D TEST option, use -D DEBUG to get
+verbose output.
+
+Try: `` make test-libformula ``
 
 ### APIs:
 
@@ -142,10 +144,13 @@ The status returned by evaluate() can take following values:
 * Supports any single-byte charset (like ISO88591) or UTF-8 with FGL_LENGTH_SEMANTICS=CHAR
 * Identifiers can only be ASCII based ([_a-zA-Z][0-9_a-zA-Z])
 
-### No-regression tests
+### Non-regression tests
 
 The liblexer.4gl code implements non-regression tests that can be
-enabled when compiling with the -D TEST option, try: `` make test ``
+enabled when compiling with the -D TEST option, use -D DEBUG to get
+verbose output.
+
+Try: `` make test-liblexer ``
 
 ### APIs:
 
@@ -168,7 +173,4 @@ Possible token ids are:
 - SL_TOKID_INV_NUMBER
 - SL_TOKID_INV_IDENT
 - SL_TOKID_INV_BLANK
-
-
-## Bug fixes:
 

@@ -455,7 +455,7 @@ display pos, "  t=", tokid, " [", token, "]"
           RETURN tokid
        END IF
     END WHILE
-&ifdef TESTG
+&ifdef DEBUG
 display "last pos: ", pos, " length:", length(str)
 &endif
     RETURN 0
