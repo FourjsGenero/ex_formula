@@ -7,8 +7,9 @@ arithmetical expressions using basic math functions and user variables.
 
 The code is based on the "shunting-yard" algorithm.
 
-The library is DBMONEY/DBFORMAT independent, it uses always dot as
-decimal separator.
+Note: The library is DBMONEY/DBFORMAT independent: It uses always dot as
+decimal separator. This is mandatory, because the syntax allows function
+calls with parameters separated by a comma.
 
 ![Simple calculator demo (GDC)](https://github.com/FourjsGenero/ex_formula/raw/master/docs/formula-screen-001.png)
 
