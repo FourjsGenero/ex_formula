@@ -185,7 +185,7 @@ END FUNCTION
 PRIVATE FUNCTION lookup_variable(name,auto)
     DEFINE name STRING,
            auto BOOLEAN
-    DEFINE x, m INTEGER
+    DEFINE x INTEGER
     LET x = vars.search("name", name)
     IF auto AND x<=0 THEN
        LET x = vars.getLength()+1
@@ -217,8 +217,7 @@ PUBLIC FUNCTION clearVariable(name)
 END FUNCTION
 
 PUBLIC FUNCTION getVariable(name)
-    DEFINE name STRING,
-           value t_number
+    DEFINE name STRING
     DEFINE x INTEGER
     LET x = lookup_variable(name,FALSE)
     IF x>0 THEN
@@ -714,7 +713,7 @@ PRIVATE FUNCTION eval_operator(op,reg)
            ASSERT(FALSE)
        END CASE
     CATCH
-       CASE STATUS
+       CASE status
          WHEN -1202 LET r = EE_DIVISION_BY_ZERO
          --WHEN -1226 LET r = EE_OVERFLOW_ERROR -- Impossible with DEC(32)
          OTHERWISE  LET r = EE_OPERATOR_ERROR
@@ -1326,7 +1325,6 @@ END FUNCTION
 PRIVATE FUNCTION prepare(expr)
     DEFINE expr STRING
     DEFINE buf base.StringBuffer,
-           r INTEGER,
            pos INTEGER, tokid SMALLINT, token STRING,
            last_pos INTEGER, last_tokid SMALLINT, last_token STRING,
            next_pos INTEGER, next_tokid SMALLINT, next_token STRING,
@@ -1563,6 +1561,7 @@ PRIVATE FUNCTION precedence_index(oper)
       WHEN ET_OPER_OR        RETURN 1
       OTHERWISE              ASSERT(FALSE)
     END CASE
+    RETURN NULL
 END FUNCTION
 
 PRIVATE FUNCTION pop_operators_to_output(first)

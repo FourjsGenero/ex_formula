@@ -12,7 +12,7 @@ all: $(PROGMOD) $(FORMS)
 	fglform -M $<
 
 %.42m: %.4gl
-	fglcomp -M $<
+	fglcomp -Wall -M $<
 
 run:: all
 	fglrun formula_demo.42m

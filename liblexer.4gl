@@ -441,7 +441,7 @@ END FUNCTION
 PRIVATE FUNCTION parse_string(str)
     DEFINE str STRING
     DEFINE buf base.StringBuffer,
-           pos, r INTEGER,
+           pos INTEGER,
            tokid SMALLINT, token STRING
     LET buf = base.StringBuffer.create()
     CALL buf.append(str)
