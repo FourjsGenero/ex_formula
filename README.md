@@ -73,25 +73,25 @@ Example:
 
 ### Functions
 
- Function    | Description
------------- | ----------------------------
-  min(a,b)   | Minimum of a and b
-  max(a,b)   | Maximum of a and b
-  iif(c,a,b) | Conditional selection (if c!=0, a otherwise b)
-  asin(x)    | Arc sine (x in radians)
-  sin(x)     | Sine (x in radians)
-  acos(x)    | Arc cosine (x in radians)
-  cos(x)     | Cosine (x in radians)
-  atan(x)    | Arc tangent (x in radians)
-  tan(x)     | Tangent (x in radians)
-  deg(r)     | Convert radians to degrees
-  rad(d)     | Convert degrees to radians
-  sqrt(x)    | Square root
-  exp(x)     | Base-e exponential
-  logn(x)    | Natural logarithm
-  rand(m)    | Random integer 0<=r<=m
-  mod(a,b)   | Modulo (reminder of a/b)
-  abs(x)     | Returns -x if x<0
+ Function        | Description
+---------------- | ----------------------------
+ `` min(a,b) ``  | Minimum of a and b
+ `` max(a,b) ``  | Maximum of a and b
+ `` iif(c,a,b) ``| Conditional selection (if c!=0, a otherwise b)
+ `` asin(x) ``   | Arc sine (x in radians)
+ `` sin(x) ``    | Sine (x in radians)
+ `` acos(x) ``   | Arc cosine (x in radians)
+ `` cos(x) ``    | Cosine (x in radians)
+ `` atan(x) ``   | Arc tangent (x in radians)
+ `` tan(x) ``    | Tangent (x in radians)
+ `` deg(r) ``    | Convert radians to degrees
+ `` rad(d) ``    | Convert degrees to radians
+ `` sqrt(x) ``   | Square root
+ `` exp(x) ``    | Base-e exponential
+ `` logn(x) ``   | Natural logarithm
+ `` rand(m) ``   | Random integer 0<=r<=m
+ `` mod(a,b) ``  | Modulo (reminder of a/b)
+ `` abs(x) ``    | Returns -x if x<0
 
 
 ## Programmer's reference: libformula.4gl
