@@ -1,10 +1,10 @@
 IMPORT FGL libformula
 
 DEFINE rec RECORD
-           input STRING,
-           status SMALLINT,
-           message STRING,
-           result DECIMAL(32),
+           src STRING,
+           sta SMALLINT,
+           msg STRING,
+           res DECIMAL(32),
            var_name STRING,
            var_value DECIMAL(32)
        END RECORD
@@ -32,48 +32,48 @@ MAIN
         CALL sync_var_list()
         CALL sync_var_fields(DIALOG.getCurrentRow("sr"))
 
-    ON ACTION n_0       CALL append("0",FALSE)
-    ON ACTION n_1       CALL append("1",FALSE)
-    ON ACTION n_2       CALL append("2",FALSE)
-    ON ACTION n_3       CALL append("3",FALSE)
-    ON ACTION n_4       CALL append("4",FALSE)
-    ON ACTION n_5       CALL append("5",FALSE)
-    ON ACTION n_6       CALL append("6",FALSE)
-    ON ACTION n_7       CALL append("7",FALSE)
-    ON ACTION n_8       CALL append("8",FALSE)
-    ON ACTION n_9       CALL append("9",FALSE)
-    ON ACTION n_dot     CALL append(".",FALSE)
-    ON ACTION oper_add  CALL append("+",TRUE)
-    ON ACTION oper_sub  CALL append("-",TRUE)
-    ON ACTION oper_mul  CALL append("*",TRUE)
-    ON ACTION oper_div  CALL append("/",TRUE)
-    ON ACTION oper_exp  CALL append("**",TRUE)
-    ON ACTION oper_cbr  CALL append(")",TRUE)
-    ON ACTION oper_and  CALL append("and",TRUE)
-    ON ACTION oper_or   CALL append("or",TRUE)
-    ON ACTION oper_not  CALL append("not",TRUE)
-    ON ACTION clear     LET rec.input = NULL
-    ON ACTION f_sin     CALL append("sin(",TRUE)
-    ON ACTION f_asin    CALL append("asin(",TRUE)
-    ON ACTION f_cos     CALL append("cos(",TRUE)
-    ON ACTION f_acos    CALL append("acos(",TRUE)
-    ON ACTION f_tan     CALL append("tan(",TRUE)
-    ON ACTION f_atan    CALL append("atan(",TRUE)
-    ON ACTION f_min     CALL append("min(",TRUE)
-    ON ACTION f_max     CALL append("max(",TRUE)
-    ON ACTION f_sqrt    CALL append("sqrt(",TRUE)
-    ON ACTION f_exp     CALL append("exp(",TRUE)
-    ON ACTION f_logn    CALL append("logn(",TRUE)
-    ON ACTION f_mod     CALL append("mod(",TRUE)
-    ON ACTION f_rand    CALL append("rand(",TRUE)
-    ON ACTION f_rad     CALL append("rad(",TRUE)
-    ON ACTION f_deg     CALL append("deg(",TRUE)
-    ON ACTION f_iif     CALL append("iif(",TRUE)
-    ON ACTION f_abs     CALL append("abs(",TRUE)
+    ON ACTION n_0       CALL append_element("0",FALSE)
+    ON ACTION n_1       CALL append_element("1",FALSE)
+    ON ACTION n_2       CALL append_element("2",FALSE)
+    ON ACTION n_3       CALL append_element("3",FALSE)
+    ON ACTION n_4       CALL append_element("4",FALSE)
+    ON ACTION n_5       CALL append_element("5",FALSE)
+    ON ACTION n_6       CALL append_element("6",FALSE)
+    ON ACTION n_7       CALL append_element("7",FALSE)
+    ON ACTION n_8       CALL append_element("8",FALSE)
+    ON ACTION n_9       CALL append_element("9",FALSE)
+    ON ACTION n_dot     CALL append_element(".",FALSE)
+    ON ACTION oper_add  CALL append_element("+",TRUE)
+    ON ACTION oper_sub  CALL append_element("-",TRUE)
+    ON ACTION oper_mul  CALL append_element("*",TRUE)
+    ON ACTION oper_div  CALL append_element("/",TRUE)
+    ON ACTION oper_exp  CALL append_element("**",TRUE)
+    ON ACTION oper_cbr  CALL append_element(")",TRUE)
+    ON ACTION oper_and  CALL append_element("and",TRUE)
+    ON ACTION oper_or   CALL append_element("or",TRUE)
+    ON ACTION oper_not  CALL append_element("not",TRUE)
+    ON ACTION clear     LET rec.src = NULL
+    ON ACTION f_sin     CALL append_element("sin(",TRUE)
+    ON ACTION f_asin    CALL append_element("asin(",TRUE)
+    ON ACTION f_cos     CALL append_element("cos(",TRUE)
+    ON ACTION f_acos    CALL append_element("acos(",TRUE)
+    ON ACTION f_tan     CALL append_element("tan(",TRUE)
+    ON ACTION f_atan    CALL append_element("atan(",TRUE)
+    ON ACTION f_min     CALL append_element("min(",TRUE)
+    ON ACTION f_max     CALL append_element("max(",TRUE)
+    ON ACTION f_sqrt    CALL append_element("sqrt(",TRUE)
+    ON ACTION f_exp     CALL append_element("exp(",TRUE)
+    ON ACTION f_logn    CALL append_element("logn(",TRUE)
+    ON ACTION f_mod     CALL append_element("mod(",TRUE)
+    ON ACTION f_rand    CALL append_element("rand(",TRUE)
+    ON ACTION f_rad     CALL append_element("rad(",TRUE)
+    ON ACTION f_deg     CALL append_element("deg(",TRUE)
+    ON ACTION f_iif     CALL append_element("iif(",TRUE)
+    ON ACTION f_abs     CALL append_element("abs(",TRUE)
 
     ON ACTION copy_result ATTRIBUTES(ACCELERATOR="Control-U")
-       IF rec.result IS NOT NULL THEN
-          LET rec.var_value = rec.result
+       IF rec.res IS NOT NULL THEN
+          LET rec.var_value = rec.res
           LET rec.var_name = SFMT("result_%1",varlist.getLength()+1)
           CALL libformula.setVariable( rec.var_name,  rec.var_value )
           CALL sync_var_list()
@@ -92,8 +92,8 @@ MAIN
        END IF
 
     ON ACTION eval ATTRIBUTES(ACCELERATOR="RETURN")
-       CALL libformula.evaluate(rec.input) RETURNING rec.status, rec.result
-       LET rec.message = IIF(rec.status==0,NULL,getErrorMessage(rec.status))
+       CALL libformula.evaluate(rec.src) RETURNING rec.sta, rec.res
+       LET rec.msg = IIF(rec.sta==0,NULL,getErrorMessage(rec.sta))
 
     ON ACTION close
        EXIT DIALOG
@@ -104,15 +104,14 @@ MAIN
 
 END MAIN
 
-FUNCTION append(p,s)
-    DEFINE p STRING, s BOOLEAN
+FUNCTION append_element(p STRING, s BOOLEAN) RETURNS ()
     DEFINE b base.StringBuffer,
            sels,sele,tmp, ilen SMALLINT
     IF s THEN
        LET p = " ", p, " "
     END IF
     LET b = base.StringBuffer.create()
-    LET ilen = rec.input.getLength()
+    LET ilen = rec.src.getLength()
     LET sels = fgl_dialog_getcursor()
     LET sele = fgl_dialog_getselectionend()
     IF sels > sele THEN
@@ -120,7 +119,7 @@ FUNCTION append(p,s)
        LET sele = sels
        LET sels = tmp
     END IF
-    CALL b.append(rec.input)
+    CALL b.append(rec.src)
     IF sels==sele THEN
        IF sels <= ilen THEN
           CALL b.insertAt(sels, p)
@@ -135,14 +134,13 @@ FUNCTION append(p,s)
        CALL b.replaceAt(sels, (sele-sels), p)
        LET sele = sels + p.getLength()
     END IF
-    LET rec.input = b.toString()
+    LET rec.src = b.toString()
     CALL fgl_dialog_setselection( sels, sele )
 END FUNCTION
 
-FUNCTION sync_var_fields(x)
-    DEFINE x INTEGER
+FUNCTION sync_var_fields(x INTEGER) RETURNS ()
     IF x>0 THEN
-       LET rec.var_name = varlist[x].name
+       LET rec.var_name = varlist[x].aname
        LET rec.var_value = libformula.getVariable(rec.var_name)
     ELSE
        LET rec.var_name = NULL
@@ -150,6 +148,6 @@ FUNCTION sync_var_fields(x)
     END IF
 END FUNCTION
 
-FUNCTION sync_var_list()
+FUNCTION sync_var_list() RETURNS ()
     CALL libformula.getVariableList(varlist)
 END FUNCTION

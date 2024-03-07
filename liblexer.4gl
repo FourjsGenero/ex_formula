@@ -19,7 +19,7 @@ PUBLIC TYPE t_lexer_tokens DYNAMIC ARRAY OF RECORD
             tokid SMALLINT,
             token STRING,
             igncase BOOLEAN,
-            action SMALLINT -- -1 stop, 1 warning ...
+            act SMALLINT -- -1 stop, 1 warning ...
        END RECORD
 
 PRIVATE DEFINE init_count SMALLINT
@@ -30,7 +30,7 @@ MAIN
 
     CALL initialize()
 
-    IF LENGTH("é日") != 2 THEN
+    IF length("é日") != 2 THEN
        DISPLAY "ERROR: Make sure locale is UTF-8 and FGL_LENGTH_SEMANTICS=CHAR!"
        EXIT PROGRAM 1
     END IF
@@ -65,19 +65,20 @@ MAIN
 
 END MAIN
 
-PRIVATE FUNCTION test_file(fn)
-    DEFINE fn STRING
+{
+PRIVATE FUNCTION test_file(fn STRING) RETURNS ()
     DEFINE ch base.Channel,
-           sql STRING
+           sqlcmd STRING
     LET ch = base.Channel.create()
     CALL ch.openFile(fn,"r")
     WHILE TRUE
-        LET sql = ch.readLine()
-        IF ch.isEOF() THEN EXIT WHILE END IF
-        DISPLAY "\n==== ", sql
-        DISPLAY parse_string(sql)
+        LET sqlcmd = ch.readLine()
+        IF ch.isEof() THEN EXIT WHILE END IF
+        DISPLAY "\n==== ", sqlcmd
+        DISPLAY parse_string(sqlcmd)
     END WHILE
 END FUNCTION
+}
 
 PRIVATE FUNCTION test_extract_number()
 
@@ -116,8 +117,7 @@ PRIVATE FUNCTION test_extract_number()
     CALL _test_extract_number("123.34_")
 END FUNCTION
 
-PRIVATE FUNCTION _test_extract_number(str)
-    DEFINE str CHAR(40)
+PRIVATE FUNCTION _test_extract_number(str CHAR(40)) RETURNS ()
     DEFINE buf base.StringBuffer,
            tid, pos INTEGER,
            tok base.StringBuffer
@@ -128,7 +128,7 @@ PRIVATE FUNCTION _test_extract_number(str)
     DISPLAY str, ":", tid, pos, " [",tok.toString(),"]"
 END FUNCTION
 
-PRIVATE FUNCTION test_extract_string()
+PRIVATE FUNCTION test_extract_string() RETURNS ()
 
     DISPLAY "\n==== extract strings:"
 
@@ -163,8 +163,7 @@ PRIVATE FUNCTION test_extract_string()
 
 END FUNCTION
 
-PRIVATE FUNCTION _test_extract_string(str)
-    DEFINE str CHAR(40)
+PRIVATE FUNCTION _test_extract_string(str CHAR(40)) RETURNS ()
     DEFINE buf base.StringBuffer,
            tid, pos INTEGER,
            tok base.StringBuffer
@@ -175,7 +174,7 @@ PRIVATE FUNCTION _test_extract_string(str)
     DISPLAY str, ":", tid, pos, " [",tok.toString(),"]"
 END FUNCTION
 
-PRIVATE FUNCTION test_extract_identifier()
+PRIVATE FUNCTION test_extract_identifier() RETURNS ()
 
     DISPLAY "\n==== extract identifiers"
 
@@ -200,8 +199,7 @@ PRIVATE FUNCTION test_extract_identifier()
     CALL _test_extract_identifier(" 2ab")
 END FUNCTION
 
-PRIVATE FUNCTION _test_extract_identifier(str)
-    DEFINE str CHAR(40)
+PRIVATE FUNCTION _test_extract_identifier(str CHAR(40)) RETURNS ()
     DEFINE buf base.StringBuffer,
            tid, pos INTEGER,
            tok base.StringBuffer
@@ -212,7 +210,7 @@ PRIVATE FUNCTION _test_extract_identifier(str)
     DISPLAY str, ":", tid, pos, " [",tok.toString(),"]"
 END FUNCTION
 
-PRIVATE FUNCTION test_extract_blank()
+PRIVATE FUNCTION test_extract_blank() RETURNS ()
 
     DISPLAY "\n==== extract blanks:"
 
@@ -225,8 +223,7 @@ PRIVATE FUNCTION test_extract_blank()
 
 END FUNCTION
 
-PRIVATE FUNCTION _test_extract_blank(str)
-    DEFINE str STRING
+PRIVATE FUNCTION _test_extract_blank(str STRING) RETURNS ()
     DEFINE buf base.StringBuffer,
            tid, pos INTEGER,
            tok base.StringBuffer
@@ -241,20 +238,21 @@ END FUNCTION
 
 #---
 
-PUBLIC FUNCTION initialize()
+PUBLIC FUNCTION initialize() RETURNS ()
     LET init_count = init_count+1
 END FUNCTION
 
-PUBLIC FUNCTION finalize()
+PUBLIC FUNCTION finalize() RETURNS ()
     LET init_count = init_count-1
 END FUNCTION
 
 #---
 
-PRIVATE FUNCTION extract_number(buf,pos,tok)
-    DEFINE buf base.StringBuffer,
-           pos INTEGER,
-           tok base.StringBuffer
+PRIVATE FUNCTION extract_number(
+    buf base.StringBuffer,
+    pos INTEGER,
+    tok base.StringBuffer
+) RETURNS (SMALLINT, INTEGER)
     DEFINE x INTEGER,
            dig_seen BOOLEAN,
            sgn_seen BOOLEAN,
@@ -293,10 +291,11 @@ PRIVATE FUNCTION extract_number(buf,pos,tok)
     RETURN SL_TOKID_NUMBER, x
 END FUNCTION
 
-PRIVATE FUNCTION extract_string(buf,pos,tok)
-    DEFINE buf base.StringBuffer,
-           pos INTEGER,
-           tok base.StringBuffer
+PRIVATE FUNCTION extract_string(
+    buf base.StringBuffer,
+    pos INTEGER,
+    tok base.StringBuffer
+) RETURNS (SMALLINT,INTEGER)
     DEFINE x INTEGER,
            delim CHAR(1),
            c, c2 CHAR(1)
@@ -338,10 +337,11 @@ PRIVATE FUNCTION extract_string(buf,pos,tok)
     RETURN SL_TOKID_INV_STRING, NULL
 END FUNCTION
 
-PRIVATE FUNCTION extract_identifier(buf,pos,tok)
-    DEFINE buf base.StringBuffer,
-           pos INTEGER,
-           tok base.StringBuffer
+PRIVATE FUNCTION extract_identifier(
+    buf base.StringBuffer,
+    pos INTEGER,
+    tok base.StringBuffer
+) RETURNS (SMALLINT,INTEGER)
     DEFINE x INTEGER,
            c CHAR(1)
     CALL tok.clear()
@@ -362,15 +362,15 @@ PRIVATE FUNCTION extract_identifier(buf,pos,tok)
     RETURN SL_TOKID_IDENT, x
 END FUNCTION
 
-PRIVATE FUNCTION is_blank(c)
-    DEFINE c CHAR(1)
+PRIVATE FUNCTION is_blank(c CHAR(1)) RETURNS BOOLEAN
     RETURN (c==ASCII(32) OR c==ASCII(9) OR c==ASCII(13) OR c==ASCII(10))
 END FUNCTION
 
-PRIVATE FUNCTION extract_blank(buf,pos,tok)
-    DEFINE buf base.StringBuffer,
-           pos INTEGER,
-           tok base.StringBuffer
+PRIVATE FUNCTION extract_blank(
+    buf base.StringBuffer,
+    pos INTEGER,
+    tok base.StringBuffer
+) RETURNS (SMALLINT,INTEGER)
     DEFINE x INTEGER,
            seen BOOLEAN,
            c CHAR(1)
@@ -393,9 +393,10 @@ PRIVATE FUNCTION extract_blank(buf,pos,tok)
     END IF
 END FUNCTION
 
-PRIVATE FUNCTION _next_token(buf,pos)
-    DEFINE buf base.StringBuffer,
-           pos INTEGER
+PRIVATE FUNCTION _next_token(
+    buf base.StringBuffer,
+    pos INTEGER
+) RETURNS (SMALLINT, INTEGER, STRING)
     DEFINE next_pos INTEGER,
            tokid SMALLINT,
            token base.StringBuffer,
@@ -423,10 +424,11 @@ PRIVATE FUNCTION _next_token(buf,pos)
     RETURN tokid, next_pos, token.toString()
 END FUNCTION
 
-PUBLIC FUNCTION getNextToken(buf,pos,ib)
-    DEFINE buf base.StringBuffer,
-           pos INTEGER,
-           ib BOOLEAN
+PUBLIC FUNCTION getNextToken(
+    buf base.StringBuffer,
+    pos INTEGER,
+    ib BOOLEAN
+) RETURNS (SMALLINT, INTEGER, STRING)
     DEFINE next_pos INTEGER,
            tokid SMALLINT,
            token STRING
@@ -438,8 +440,7 @@ PUBLIC FUNCTION getNextToken(buf,pos,ib)
     RETURN tokid, next_pos, token
 END FUNCTION
 
-PRIVATE FUNCTION parse_string(str)
-    DEFINE str STRING
+PRIVATE FUNCTION parse_string(str STRING) RETURNS SMALLINT
     DEFINE buf base.StringBuffer,
            pos INTEGER,
            tokid SMALLINT, token STRING
@@ -460,4 +461,3 @@ display "last pos: ", pos, " length:", length(str)
 &endif
     RETURN 0
 END FUNCTION
-

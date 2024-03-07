@@ -23,8 +23,8 @@ PRIVATE TYPE t_number DECIMAL(32)
 PRIVATE TYPE t_elem_type SMALLINT
 
 PRIVATE TYPE t_variable RECORD
-               name STRING,
-               value t_number
+               aname STRING,
+               avalue t_number
         END RECORD
 PUBLIC TYPE t_varlist DYNAMIC ARRAY OF t_variable
 PRIVATE DEFINE vars t_varlist
@@ -70,16 +70,16 @@ PRIVATE CONSTANT FN_IIF  = "iif"
 PRIVATE CONSTANT FN_ABS  = "abs"
 
 PRIVATE TYPE t_element RECORD
-               type t_elem_type,   -- ET_*
-               name STRING,    -- FN_* (type == ET_FUNCTION)
-               value t_number  -- (type == ET_VALUE)
+               atype t_elem_type,   -- ET_*
+               aname STRING,    -- FN_* (type == ET_FUNCTION)
+               avalue t_number  -- (type == ET_VALUE)
         END RECORD
 
 -- Output queue
-PRIVATE DEFINE out DYNAMIC ARRAY OF t_element
+PRIVATE DEFINE out_queue DYNAMIC ARRAY OF t_element
 
 -- Stack
-PRIVATE DEFINE stk DYNAMIC ARRAY OF t_element
+PRIVATE DEFINE comp_stack DYNAMIC ARRAY OF t_element
 
 PRIVATE DEFINE init_count SMALLINT
 
@@ -117,8 +117,7 @@ END MAIN
 
 &endif
 
-PUBLIC FUNCTION getErrorMessage(num)
-    DEFINE num SMALLINT
+PUBLIC FUNCTION getErrorMessage(num SMALLINT) RETURNS STRING
     DEFINE m STRING
     CASE num
       WHEN EE_SYNTAX_ERROR         LET m="Syntax error"
@@ -143,7 +142,7 @@ END FUNCTION
 
 &ifdef TEST
 
-FUNCTION test_vars()
+FUNCTION test_vars() RETURNS ()
     DEFINE v1 t_number,
            x INTEGER,
            n STRING
@@ -182,52 +181,45 @@ END FUNCTION
 
 #---
 
-PRIVATE FUNCTION lookup_variable(name,auto)
-    DEFINE name STRING,
-           auto BOOLEAN
+PRIVATE FUNCTION lookup_variable(aname STRING, autoadd BOOLEAN) RETURNS INTEGER
     DEFINE x INTEGER
-    LET x = vars.search("name", name)
-    IF auto AND x<=0 THEN
+    LET x = vars.search("aname", aname)
+    IF autoadd AND x<=0 THEN
        LET x = vars.getLength()+1
-       LET vars[x].name = name
+       LET vars[x].aname = aname
     END IF
     RETURN x
 END FUNCTION
 
-PUBLIC FUNCTION getVariableList(vl)
-    DEFINE vl t_varlist
+PUBLIC FUNCTION getVariableList(vl t_varlist) RETURNS ()
     CALL vars.copyTo( vl )
 END FUNCTION
 
-PUBLIC FUNCTION setVariable(name, value)
-    DEFINE name STRING,
-           value t_number
+PUBLIC FUNCTION setVariable(aname STRING, avalue t_number) RETURNS ()
     DEFINE x INTEGER
-    LET x = lookup_variable(name,TRUE)
-    LET vars[ x ].value = value
+    LET x = lookup_variable(aname,TRUE)
+    LET vars[ x ].avalue = avalue
 END FUNCTION
 
-PUBLIC FUNCTION clearVariable(name)
-    DEFINE name STRING
+PUBLIC FUNCTION clearVariable(aname STRING) RETURNS ()
     DEFINE x INTEGER
-    LET x = lookup_variable(name,FALSE)
+    LET x = lookup_variable(aname,FALSE)
     IF x>0 THEN
        CALL vars.deleteElement(x)
     END IF
 END FUNCTION
 
-PUBLIC FUNCTION getVariable(name)
-    DEFINE name STRING
+PUBLIC FUNCTION getVariable(aname STRING) RETURNS STRING
     DEFINE x INTEGER
-    LET x = lookup_variable(name,FALSE)
+    LET x = lookup_variable(aname,FALSE)
     IF x>0 THEN
-       RETURN vars[x].value
+       RETURN vars[x].avalue
     ELSE
        RETURN NULL -- TODO? RETURN 0 (zero) for undefined variables?
     END IF
 END FUNCTION
 
-PUBLIC FUNCTION clearVariables()
+PUBLIC FUNCTION clearVariables() RETURNS ()
     CALL vars.clear()
     CALL predefine_constants()
 END FUNCTION
@@ -236,7 +228,7 @@ END FUNCTION
 
 &ifdef TEST
 
-FUNCTION test_func()
+FUNCTION test_func() RETURNS ()
     DEFINE reg DYNAMIC ARRAY OF t_number,
            r SMALLINT
 
@@ -402,9 +394,10 @@ END FUNCTION
 
 &endif
 
-PRIVATE FUNCTION eval_function(fn, reg)
-    DEFINE fn STRING,
-           reg DYNAMIC ARRAY OF t_number
+PRIVATE FUNCTION eval_function(
+    fn STRING,
+    reg DYNAMIC ARRAY OF t_number
+) RETURNS SMALLINT
     DEFINE x0,xl,xr SMALLINT
     LET xr = reg.getLength()
     LET xl = xr-1
@@ -467,7 +460,7 @@ END FUNCTION
 
 &ifdef TEST
 
-FUNCTION test_oper()
+FUNCTION test_oper() RETURNS ()
     DEFINE reg DYNAMIC ARRAY OF t_number,
            r SMALLINT
 
@@ -661,11 +654,11 @@ END FUNCTION
 
 &endif
 
-PRIVATE FUNCTION eval_operator(op,reg)
-    DEFINE op t_elem_type,
-           reg DYNAMIC ARRAY OF t_number
-    DEFINE xl,xr SMALLINT,
-           r, oc INTEGER
+PRIVATE FUNCTION eval_operator(
+    op t_elem_type,
+    reg DYNAMIC ARRAY OF t_number
+) RETURNS SMALLINT
+    DEFINE xl,xr,r,oc SMALLINT
     LET xr = reg.getLength()
     IF op==ET_OPER_NOT THEN
        LET oc=1
@@ -727,55 +720,52 @@ END FUNCTION
 
 #--
 
-PRIVATE FUNCTION to_decimal(str)
-    DEFINE str STRING -- t_number
-    DEFINE dec t_number
+PRIVATE FUNCTION to_decimal(s STRING) RETURNS t_number
+    DEFINE d t_number
     -- FIXME: Missing ISO dec/str conversion in core language...
     TRY
-        CALL util.JSON.parse(str,dec)
+        CALL util.JSON.parse(s,d)
     CATCH -- Conversion error
         RETURN NULL
     END TRY
-    RETURN dec
+    RETURN d
 END FUNCTION
 
 #---
 
 &ifdef TEST
 
-PRIVATE FUNCTION test_output()
+PRIVATE FUNCTION test_output() RETURNS ()
     DEFINE r BOOLEAN
 
     LET r = output_add_number(123.456)
-    TEST_ASSERT("test_output.01001", r AND out[1].type = ET_VALUE AND out[1].value==123.456 )
+    TEST_ASSERT("test_output.01001", r AND out_queue[1].atype = ET_VALUE AND out_queue[1].avalue==123.456 )
     CALL output_clear()
-    TEST_ASSERT("test_output.01002", out.getLength()==0 )
+    TEST_ASSERT("test_output.01002", out_queue.getLength()==0 )
 
     LET r = output_add_number(-111.111)
-    TEST_ASSERT("test_output.02001", r AND out[1].type = ET_VALUE AND out[1].value IS NOT NULL AND out[1].value==-111.111)
+    TEST_ASSERT("test_output.02001", r AND out_queue[1].atype = ET_VALUE AND out_queue[1].avalue IS NOT NULL AND out_queue[1].avalue==-111.111)
     LET r = output_add_function(FN_SIN)
-    TEST_ASSERT("test_output.02003", r AND out[4].type = ET_FUNCTION AND out[3].name==FN_SIN )
+    TEST_ASSERT("test_output.02003", r AND out_queue[4].atype = ET_FUNCTION AND out_queue[3].aname==FN_SIN )
 
     CALL output_clear()
-    TEST_ASSERT("test_output.09001", out.getLength()==0 )
+    TEST_ASSERT("test_output.09001", out_queue.getLength()==0 )
 
 END FUNCTION
 
 &endif
 
-PRIVATE FUNCTION output_clear()
-    CALL out.clear()
+PRIVATE FUNCTION output_clear() RETURNS ()
+    CALL out_queue.clear()
 END FUNCTION
 
-PRIVATE FUNCTION output_add(elem)
-    DEFINE elem t_element
+PRIVATE FUNCTION output_add(elem t_element) RETURNS ()
     DEFINE x INTEGER
-    LET x = out.getLength() + 1
-    LET out[x].* = elem.*
+    LET x = out_queue.getLength() + 1
+    LET out_queue[x].* = elem.*
 END FUNCTION
 
-PRIVATE FUNCTION operator_operands(elem_type)
-    DEFINE elem_type t_elem_type
+PRIVATE FUNCTION operator_operands(elem_type t_elem_type) RETURNS SMALLINT
     CASE elem_type
       WHEN ET_OPER_EXP     RETURN 2
       WHEN ET_OPER_ADD     RETURN 2
@@ -797,13 +787,11 @@ PRIVATE FUNCTION operator_operands(elem_type)
     END CASE
 END FUNCTION
 
-PRIVATE FUNCTION check_operator(elem_type)
-    DEFINE elem_type t_elem_type
+PRIVATE FUNCTION check_operator(elem_type t_elem_type) RETURNS BOOLEAN
     RETURN ( operator_operands(elem_type) > 0 )
 END FUNCTION
 
-PRIVATE FUNCTION function_arguments(token)
-    DEFINE token STRING
+PRIVATE FUNCTION function_arguments(token STRING) RETURNS SMALLINT
     CASE token
       WHEN FN_ASIN  RETURN 1
       WHEN FN_SIN   RETURN 1
@@ -826,28 +814,25 @@ PRIVATE FUNCTION function_arguments(token)
     END CASE
 END FUNCTION
 
-PRIVATE FUNCTION check_function(token)
-    DEFINE token STRING
+PRIVATE FUNCTION check_function(token STRING) RETURNS BOOLEAN
     RETURN ( function_arguments(token) >= 0 )
 END FUNCTION
 
-PRIVATE FUNCTION output_add_function(name)
-    DEFINE name STRING
+PRIVATE FUNCTION output_add_function(aname STRING) RETURNS BOOLEAN
     DEFINE elem t_element
-    IF NOT check_function(name) THEN
+    IF NOT check_function(aname) THEN
        RETURN FALSE
     END IF
-    LET elem.type = ET_FUNCTION
-    LET elem.name = name
+    LET elem.atype = ET_FUNCTION
+    LET elem.aname = aname
     CALL output_add(elem.*)
     RETURN TRUE
 END FUNCTION
 
-PRIVATE FUNCTION output_add_number(value)
-    DEFINE value t_number
+PRIVATE FUNCTION output_add_number(avalue t_number) RETURNS BOOLEAN
     DEFINE elem t_element
-    LET elem.value = value
-    LET elem.type = ET_VALUE
+    LET elem.avalue = avalue
+    LET elem.atype = ET_VALUE
     CALL output_add(elem.*)
     RETURN TRUE
 END FUNCTION
@@ -856,112 +841,108 @@ END FUNCTION
 
 &ifdef TEST
 
-PRIVATE FUNCTION test_stack()
+PRIVATE FUNCTION test_stack() RETURNS ()
     DEFINE elem t_element,
            r BOOLEAN
 
     LET r = stack_push_operator(ET_OPER_ADD)
-    TEST_ASSERT("test_stack.01001", r AND stk[1].type = ET_OPER_ADD AND stk[1].name IS NULL AND stk[1].value IS NULL )
+    TEST_ASSERT("test_stack.01001", r AND comp_stack[1].atype = ET_OPER_ADD AND comp_stack[1].aname IS NULL AND comp_stack[1].avalue IS NULL )
     LET r = stack_push_function(FN_SIN)
-    TEST_ASSERT("test_stack.01002", r AND stk[2].type = ET_FUNCTION AND stk[2].name IS NOT NULL AND stk[2].name=="sin" )
+    TEST_ASSERT("test_stack.01002", r AND comp_stack[2].atype = ET_FUNCTION AND comp_stack[2].aname IS NOT NULL AND comp_stack[2].aname=="sin" )
     LET r = stack_push_function(FN_COS)
-    TEST_ASSERT("test_stack.01003", r AND stk[3].type = ET_FUNCTION AND stk[3].name IS NOT NULL AND stk[3].name=="cos" )
+    TEST_ASSERT("test_stack.01003", r AND comp_stack[3].atype = ET_FUNCTION AND comp_stack[3].aname IS NOT NULL AND comp_stack[3].aname=="cos" )
     LET r = stack_push_operator(ET_OPER_MUL)
-    TEST_ASSERT("test_stack.01004", r AND stk[4].type = ET_OPER_MUL AND stk[4].name IS NULL AND stk[4].value IS NULL )
+    TEST_ASSERT("test_stack.01004", r AND comp_stack[4].atype = ET_OPER_MUL AND comp_stack[4].aname IS NULL AND comp_stack[4].avalue IS NULL )
     LET r = stack_push_control(ET_LEFT_BRACE)
-    TEST_ASSERT("test_stack.01005", r AND stk[5].type = ET_LEFT_BRACE AND stk[5].name IS NULL AND stk[5].value IS NULL )
+    TEST_ASSERT("test_stack.01005", r AND comp_stack[5].atype = ET_LEFT_BRACE AND comp_stack[5].aname IS NULL AND comp_stack[5].avalue IS NULL )
     LET r = stack_push_operator(ET_OPER_UNA_MIN)
-    TEST_ASSERT("test_stack.01006", r AND stk[6].type = ET_OPER_UNA_MIN AND stk[6].name IS NULL AND stk[6].value IS NULL )
+    TEST_ASSERT("test_stack.01006", r AND comp_stack[6].atype = ET_OPER_UNA_MIN AND comp_stack[6].aname IS NULL AND comp_stack[6].avalue IS NULL )
     CALL stack_pop() RETURNING elem.*
-    TEST_ASSERT("test_stack.01007", stk.getLength()==5 AND elem.type = ET_OPER_UNA_MIN AND elem.name IS NULL AND elem.value IS NULL )
+    TEST_ASSERT("test_stack.01007", comp_stack.getLength()==5 AND elem.atype = ET_OPER_UNA_MIN AND elem.aname IS NULL AND elem.avalue IS NULL )
     CALL stack_pop() RETURNING elem.*
-    TEST_ASSERT("test_stack.01008", stk.getLength()==4 AND elem.type = ET_LEFT_BRACE AND elem.name IS NULL AND elem.value IS NULL )
+    TEST_ASSERT("test_stack.01008", comp_stack.getLength()==4 AND elem.atype = ET_LEFT_BRACE AND elem.aname IS NULL AND elem.avalue IS NULL )
     CALL stack_pop() RETURNING elem.*
-    TEST_ASSERT("test_stack.01009", stk.getLength()==3 AND elem.type = ET_OPER_MUL AND elem.name IS NULL AND elem.value IS NULL )
-    LET elem.type = stack_next_type()
-    TEST_ASSERT("test_stack.01010", stk.getLength()==3 AND elem.type = ET_FUNCTION )
+    TEST_ASSERT("test_stack.01009", comp_stack.getLength()==3 AND elem.atype = ET_OPER_MUL AND elem.aname IS NULL AND elem.avalue IS NULL )
+    LET elem.atype = stack_next_type()
+    TEST_ASSERT("test_stack.01010", comp_stack.getLength()==3 AND elem.atype = ET_FUNCTION )
     CALL stack_pop() RETURNING elem.*
-    TEST_ASSERT("test_stack.01011", stk.getLength()==2 AND elem.type = ET_FUNCTION AND elem.name IS NOT NULL AND elem.name=="cos" )
+    TEST_ASSERT("test_stack.01011", comp_stack.getLength()==2 AND elem.atype = ET_FUNCTION AND elem.aname IS NOT NULL AND elem.aname=="cos" )
     CALL stack_pop() RETURNING elem.*
-    TEST_ASSERT("test_stack.01012", stk.getLength()==1 AND elem.type = ET_FUNCTION AND elem.name IS NOT NULL AND elem.name=="sin" )
-    LET elem.type = stack_next_type()
-    TEST_ASSERT("test_stack.01013", stk.getLength()==1 AND elem.type = ET_OPER_ADD )
+    TEST_ASSERT("test_stack.01012", comp_stack.getLength()==1 AND elem.atype = ET_FUNCTION AND elem.aname IS NOT NULL AND elem.aname=="sin" )
+    LET elem.atype = stack_next_type()
+    TEST_ASSERT("test_stack.01013", comp_stack.getLength()==1 AND elem.atype = ET_OPER_ADD )
     CALL stack_pop() RETURNING elem.*
-    TEST_ASSERT("test_stack.01014", stk.getLength()==0 AND elem.type = ET_OPER_ADD AND elem.name IS NULL AND elem.value IS NULL )
+    TEST_ASSERT("test_stack.01014", comp_stack.getLength()==0 AND elem.atype = ET_OPER_ADD AND elem.aname IS NULL AND elem.avalue IS NULL )
     CALL stack_pop() RETURNING elem.*
-    TEST_ASSERT("test_stack.01015", stk.getLength()==0 AND elem.type IS NULL )
+    TEST_ASSERT("test_stack.01015", comp_stack.getLength()==0 AND elem.atype IS NULL )
     CALL stack_clear()
-    TEST_ASSERT("test_stack.01099", stk.getLength()==0 )
+    TEST_ASSERT("test_stack.01099", comp_stack.getLength()==0 )
 
 END FUNCTION
 
 &endif
 
 
-PRIVATE FUNCTION stack_clear()
-    CALL stk.clear()
+PRIVATE FUNCTION stack_clear() RETURNS ()
+    CALL comp_stack.clear()
 END FUNCTION
 
-PRIVATE FUNCTION _stack_push(elem)
-    DEFINE elem t_element
+PRIVATE FUNCTION _stack_push(elem t_element) RETURNS ()
     DEFINE x INTEGER
-    LET x = stk.getLength() + 1
-    LET stk[x].* = elem.*
+    LET x = comp_stack.getLength() + 1
+    LET comp_stack[x].* = elem.*
 END FUNCTION
 
-PRIVATE FUNCTION stack_push_operator(oper)
-    DEFINE oper t_elem_type
+PRIVATE FUNCTION stack_push_operator(oper t_elem_type) RETURNS BOOLEAN
     DEFINE elem t_element
-    LET elem.type = oper
+    LET elem.atype = oper
     CALL _stack_push(elem.*)
     RETURN TRUE
 END FUNCTION
 
-PRIVATE FUNCTION stack_push_control(cont)
-    DEFINE cont t_elem_type
+PRIVATE FUNCTION stack_push_control(cont t_elem_type) RETURNS BOOLEAN
     DEFINE elem t_element
-    LET elem.type = cont
+    LET elem.atype = cont
     CALL _stack_push(elem.*)
     RETURN TRUE
 END FUNCTION
 
-PRIVATE FUNCTION stack_push_function(name)
-    DEFINE name STRING
+PRIVATE FUNCTION stack_push_function(aname STRING) RETURNS BOOLEAN
     DEFINE elem t_element
-    IF NOT check_function(name) THEN
+    IF NOT check_function(aname) THEN
        RETURN FALSE
     END IF
-    LET elem.type = ET_FUNCTION
-    LET elem.name = name
+    LET elem.atype = ET_FUNCTION
+    LET elem.aname = aname
     CALL _stack_push(elem.*)
     RETURN TRUE
 END FUNCTION
 
-PRIVATE FUNCTION stack_next_type()
-    IF stk.getLength() == 0 THEN
+PRIVATE FUNCTION stack_next_type() RETURNS t_elem_type
+    IF comp_stack.getLength() == 0 THEN
        RETURN NULL
     END IF
-    RETURN stk[stk.getLength()].type
+    RETURN comp_stack[comp_stack.getLength()].atype
 END FUNCTION
 
-PRIVATE FUNCTION stack_pop()
+PRIVATE FUNCTION stack_pop() RETURNS t_element
     DEFINE elem t_element,
            x INTEGER
-    LET x = stk.getLength()
+    LET x = comp_stack.getLength()
     IF x == 0 THEN
-       LET elem.type = NULL -- no more elements
-       RETURN elem.*
+       LET elem.atype = NULL -- no more elements
+       RETURN elem
     END IF
-    LET elem.* = stk[x].*
-    CALL stk.deleteElement(x)
-    RETURN elem.*
+    LET elem = comp_stack[x]
+    CALL comp_stack.deleteElement(x)
+    RETURN elem
 END FUNCTION
 
-PRIVATE FUNCTION stack_pop_trash()
+PRIVATE FUNCTION stack_pop_trash() RETURNS ()
     DEFINE x INTEGER
-    LET x = stk.getLength()
+    LET x = comp_stack.getLength()
     IF x > 0 THEN
-       CALL stk.deleteElement(x)
+       CALL comp_stack.deleteElement(x)
     END IF
 END FUNCTION
 
@@ -969,7 +950,7 @@ END FUNCTION
 
 &ifdef TEST
 
-PRIVATE FUNCTION test_eval()
+PRIVATE FUNCTION test_eval() RETURNS ()
     DEFINE s SMALLINT, v t_number
 
     CALL setVariable("x1",15)
@@ -1046,11 +1027,11 @@ PRIVATE FUNCTION test_eval()
     CALL evaluate("sqrt(99*99)") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.04007",s, s==0 AND NVL(v,0)==99)
     CALL evaluate("exp(34)") RETURNING s, v
-    TEST_ASSERT_EVAL("test_evaluate.04008",s, s==0 AND NVL(v,0)==583461742527454.8814029027342221)
+    TEST_ASSERT_EVAL("test_evaluate.04008",s, s==0 AND NVL(v,0)==583461742527454.8814029027342264)
     CALL evaluate("logn(exp(34))") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.04009",s, s==0 AND NVL(v,0)==33.99999999999999999999999999957)
     CALL evaluate("exp(logn(10))") RETURNING s, v
-    TEST_ASSERT_EVAL("test_evaluate.04010",s, s==0 AND NVL(v,0)==9.999999999999999999999999999791)
+    TEST_ASSERT_EVAL("test_evaluate.04010",s, s==0 AND NVL(v,0)==9.999999999999999999999999999799)
     CALL evaluate("mod(28,5)") RETURNING s, v
     TEST_ASSERT_EVAL("test_evaluate.04011",s, s==0 AND NVL(v,0)==3.0)
     CALL evaluate("asin(0.2)") RETURNING s, v
@@ -1230,8 +1211,7 @@ END FUNCTION
 
 &endif
 
-PRIVATE FUNCTION unary_candidate(token, last_elem_type)
-    DEFINE token, last_elem_type STRING
+PRIVATE FUNCTION unary_candidate(token STRING, last_elem_type STRING) RETURNS BOOLEAN
     IF token=="-" OR token=="+" THEN
        RETURN (
           last_elem_type == 0
@@ -1254,13 +1234,13 @@ PRIVATE FUNCTION unary_candidate(token, last_elem_type)
     RETURN FALSE
 END FUNCTION
 
-PRIVATE FUNCTION predefine_constants()
+PRIVATE FUNCTION predefine_constants() RETURNS ()
     CALL setVariable("Pi", 3.1415926535897932384626433832795) -- util.Math.pi())
     CALL setVariable("Euler",2.7182818284)
     CALL setVariable("Golden",1.6180339887498948482)
 END FUNCTION
 
-PUBLIC FUNCTION initialize()
+PUBLIC FUNCTION initialize() RETURNS ()
     LET init_count = init_count+1
     IF init_count==1 THEN
        CALL liblexer.initialize()
@@ -1268,7 +1248,7 @@ PUBLIC FUNCTION initialize()
     END IF
 END FUNCTION
 
-PUBLIC FUNCTION finalize()
+PUBLIC FUNCTION finalize() RETURNS ()
     LET init_count = init_count-1
     IF init_count==0 THEN
        CALL vars.clear()
@@ -1276,24 +1256,26 @@ PUBLIC FUNCTION finalize()
     END IF
 END FUNCTION
 
-PUBLIC FUNCTION evaluate(expr)
-    DEFINE expr STRING
+PUBLIC FUNCTION evaluate(expr STRING) RETURNS (SMALLINT, t_number)
     DEFINE r SMALLINT,
-           value t_number
-    LET r = prepare(expr)
+           v t_number
+    LET r = prepare_expression(expr)
     IF r<0 THEN
        RETURN r, NULL
     END IF
-    CALL compute( ) RETURNING r, value
+    CALL compute( ) RETURNING r, v
 &ifdef DEBUG
-display sfmt("res: (status:%1) %2", r, value)
+display sfmt("res: (status:%1) %2", r, v)
 &endif
-    RETURN r, value
+    RETURN r, v
 END FUNCTION
 
-PRIVATE FUNCTION token_to_elem_type(tokid, token, next_tokid, next_token)
-    DEFINE tokid SMALLINT, token STRING,
-           next_tokid SMALLINT, next_token STRING
+PRIVATE FUNCTION token_to_elem_type(
+    tokid SMALLINT,
+    token STRING,
+    next_tokid SMALLINT,
+    next_token STRING
+) RETURNS (SMALLINT, SMALLINT)
     IF tokid==SL_TOKID_OTHER THEN
        CASE
          WHEN token=="*" AND next_tokid==SL_TOKID_OTHER AND next_token=="*" RETURN ET_OPER_EXP, 2
@@ -1322,15 +1304,14 @@ PRIVATE FUNCTION token_to_elem_type(tokid, token, next_tokid, next_token)
     RETURN NULL, 0
 END FUNCTION
 
-PRIVATE FUNCTION prepare(expr)
-    DEFINE expr STRING
+PRIVATE FUNCTION prepare_expression(expr STRING) RETURNS SMALLINT
     DEFINE buf base.StringBuffer,
            pos INTEGER, tokid SMALLINT, token STRING,
            last_pos INTEGER, last_tokid SMALLINT, last_token STRING,
            next_pos INTEGER, next_tokid SMALLINT, next_token STRING,
            elem_type t_elem_type,
            last_elem_type t_elem_type,
-           value t_number,
+           val t_number,
            nbtokens, s SMALLINT
 &ifdef DEBUG
 display "\nin : ", expr
@@ -1381,11 +1362,11 @@ display "pos=", pos USING "##&", " tid=", tokid USING "---&", " token:[", token,
             WHEN tokid==SL_TOKID_STRING
               RETURN EE_SYNTAX_ERROR
             WHEN tokid==SL_TOKID_NUMBER
-              LET value = to_decimal(token)
-              IF value IS NULL THEN
+              LET val = to_decimal(token)
+              IF val IS NULL THEN
                  RETURN EE_INVALID_NUMBER
               ELSE
-                 LET s = output_add_number(value)
+                 LET s = output_add_number(val)
               END IF
             WHEN tokid==SL_TOKID_IDENT
               IF next_tokid==SL_TOKID_OTHER AND next_token=="(" THEN
@@ -1393,11 +1374,11 @@ display "pos=", pos USING "##&", " tid=", tokid USING "---&", " token:[", token,
                     RETURN EE_INVALID_FUNCTION
                  END IF
               ELSE -- Variable
-                 LET value = getVariable(token)
-                 IF value IS NULL THEN
+                 LET val = getVariable(token)
+                 IF val IS NULL THEN
                     RETURN EE_UNDEFINED_VARIABLE
                  ELSE
-                    LET s = output_add_number(value)
+                    LET s = output_add_number(val)
                  END IF
               END IF
             OTHERWISE
@@ -1440,8 +1421,8 @@ display "pos=", pos USING "##&", " tid=", tokid USING "---&", " token:[", token,
        END IF
 
 &ifdef DEBUG
-display "      output: ", util.JSON.stringify(out)
-display "      stack : ", util.JSON.stringify(stk)
+display "      output: ", util.JSON.stringify(out_queue)
+display "      stack : ", util.JSON.stringify(comp_stack)
 display "      --------"
 &endif
 
@@ -1451,36 +1432,36 @@ display "      --------"
     IF s<0 THEN RETURN s END IF
 
 &ifdef DEBUG
-display " last output: ", util.JSON.stringify(out)
+display " last output: ", util.JSON.stringify(out_queue)
 &endif
 
     RETURN 0
 
 END FUNCTION
 
-PRIVATE FUNCTION compute( )
+PRIVATE FUNCTION compute( ) RETURNS (SMALLINT, t_number)
     DEFINE x, m INTEGER,
            r SMALLINT,
            reg DYNAMIC ARRAY OF t_number,
            rx INTEGER
     LET rx = 0
-    LET m = out.getLength()
+    LET m = out_queue.getLength()
     FOR x=1 TO m
         CASE
-            WHEN out[x].type == ET_VALUE
-              LET reg[rx:=rx+1] = out[x].value
-            WHEN out[x].type == ET_OPER_UNA_MIN
+            WHEN out_queue[x].atype == ET_VALUE
+              LET reg[rx:=rx+1] = out_queue[x].avalue
+            WHEN out_queue[x].atype == ET_OPER_UNA_MIN
               IF rx<=0 THEN RETURN EE_SYNTAX_ERROR, NULL END IF
               LET reg[rx] = - reg[rx]
-            WHEN out[x].type == ET_OPER_UNA_PLS
+            WHEN out_queue[x].atype == ET_OPER_UNA_PLS
               IF rx<=0 THEN RETURN EE_SYNTAX_ERROR, NULL END IF
               --LET reg[rx] = reg[rx]
-            WHEN out[x].type == ET_FUNCTION
-              LET r = eval_function(out[x].name, reg)
+            WHEN out_queue[x].atype == ET_FUNCTION
+              LET r = eval_function(out_queue[x].aname, reg)
               IF r<0 THEN RETURN r, NULL END IF
               LET rx = reg.getLength()
             OTHERWISE -- Operator
-              LET r = eval_operator(out[x].type, reg)
+              LET r = eval_operator(out_queue[x].atype, reg)
               IF r<0 THEN RETURN r, NULL END IF
               LET rx = reg.getLength()
         END CASE
@@ -1491,15 +1472,14 @@ PRIVATE FUNCTION compute( )
     RETURN 0, reg[1]
 END FUNCTION
 
-PRIVATE FUNCTION pop_stack_to_output()
+PRIVATE FUNCTION pop_stack_to_output() RETURNS ()
     DEFINE elem t_element
-    ASSERT( stk.getLength()>0 )
+    ASSERT( comp_stack.getLength()>0 )
     CALL stack_pop() RETURNING elem.*
     CALL output_add(elem.*)
 END FUNCTION
 
-PRIVATE FUNCTION pop_stack_to_output_until(stop_type)
-    DEFINE stop_type t_elem_type
+PRIVATE FUNCTION pop_stack_to_output_until(stop_type t_elem_type) RETURNS SMALLINT
     DEFINE elem t_element,
            t t_elem_type
     WHILE TRUE
@@ -1516,7 +1496,7 @@ PRIVATE FUNCTION pop_stack_to_output_until(stop_type)
     RETURN 0
 END FUNCTION
 
-PRIVATE FUNCTION pop_stack_to_output_to_end()
+PRIVATE FUNCTION pop_stack_to_output_to_end() RETURNS SMALLINT
     DEFINE elem t_element,
            t t_elem_type
     LET t = stack_next_type()
@@ -1531,8 +1511,7 @@ PRIVATE FUNCTION pop_stack_to_output_to_end()
     RETURN 0
 END FUNCTION
 
-PRIVATE FUNCTION left_associative(oper)
-    DEFINE oper t_elem_type
+PRIVATE FUNCTION left_associative(oper t_elem_type) RETURNS BOOLEAN
     CASE oper
       WHEN ET_OPER_EXP       RETURN FALSE
       WHEN ET_OPER_NOT       RETURN FALSE
@@ -1540,8 +1519,7 @@ PRIVATE FUNCTION left_associative(oper)
     END CASE
 END FUNCTION
 
-PRIVATE FUNCTION precedence_index(oper)
-    DEFINE oper t_elem_type
+PRIVATE FUNCTION precedence_index(oper t_elem_type) RETURNS SMALLINT
     CASE oper
       WHEN ET_OPER_UNA_MIN   RETURN 8
       WHEN ET_OPER_UNA_PLS   RETURN 8
@@ -1564,14 +1542,13 @@ PRIVATE FUNCTION precedence_index(oper)
     RETURN NULL
 END FUNCTION
 
-PRIVATE FUNCTION pop_operators_to_output(first)
-    DEFINE first t_elem_type
+PRIVATE FUNCTION pop_operators_to_output(is_first t_elem_type) RETURNS SMALLINT
     DEFINE t t_elem_type,
            elem t_element,
            fla BOOLEAN,
            fpi SMALLINT
-    LET fla = left_associative(first)
-    LET fpi = precedence_index(first)
+    LET fla = left_associative(is_first)
+    LET fpi = precedence_index(is_first)
     WHILE TRUE
         LET t = stack_next_type()
         IF NOT check_operator(t) THEN
