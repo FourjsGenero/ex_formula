@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<WorkspaceDatabase fileContentsEncoding="CP1252" version="3.0">
+<File n="formula_demo.4gl" s="1" ts="20240711155327979">
+<Dep t="libformula.4gl"/>
+</File>
+<File n="libformula.4gl" s="1" ts="20240711155327979">
+<Dep t="liblexer.4gl"/>
+</File>
+<File n="liblexer.4gl" s="1" ts="20240711155327979"/>
+</WorkspaceDatabase>

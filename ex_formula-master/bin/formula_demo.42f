@@ -1,0 +1,96 @@
+<?xml version='1.0' encoding='windows-1252'?>
+<Form name="formula_demo" build="5.00.01" style="dialog4" width="66" height="19">
+  <Grid width="66" height="19">
+    <FormField name="formonly.src" colName="src" fieldId="0" sqlTabName="formonly" tabIndex="1">
+      <TextEdit width="41" height="8" stretch="both" wantReturns="0" scroll="1" posY="0" posX="1" gridWidth="41" gridHeight="8"/>
+    </FormField>
+    <Group name="group1" text="Variables" posY="0" posX="43" gridWidth="23" gridHeight="19">
+      <Table pageSize="13" width="21" posY="1" posX="1" gridWidth="21" gridHeight="15" tabName="sr">
+        <TableColumn name="formonly.col_vn" colName="col_vn" fieldId="4" sqlTabName="formonly" text="Name" tabIndex="2">
+          <Edit width="6" scroll="1"/>
+        </TableColumn>
+        <TableColumn name="formonly.col_vv" colName="col_vv" fieldId="5" sqlTabName="formonly" text="Value" tabIndex="3">
+          <Edit width="12" scroll="1"/>
+        </TableColumn>
+      </Table>
+      <FormField name="formonly.var_name" colName="var_name" fieldId="6" sqlTabName="formonly" tabIndex="4">
+        <Edit width="6" scroll="1" posY="16" posX="2" gridWidth="6"/>
+      </FormField>
+      <Label text="=" posY="16" posX="9" gridWidth="1"/>
+      <FormField name="formonly.var_value" colName="var_value" fieldId="7" sqlTabName="formonly" tabIndex="5">
+        <Edit width="10" scroll="1" posY="16" posX="11" gridWidth="10"/>
+      </FormField>
+      <HBox posY="17" posX="2" gridWidth="19">
+        <Button name="copy_result" width="4" text="CpRes" tabIndex="6"/>
+        <Button name="set_variable" width="5" text="Set" tabIndex="7"/>
+        <Button name="clr_variable" width="5" text="Clear" tabIndex="8"/>
+        <SpacerItem/>
+      </HBox>
+    </Group>
+    <Button name="n_7" width="6" text="7" posY="8" posX="1" gridWidth="6" tabIndex="9"/>
+    <Button name="n_8" width="6" text="8" posY="8" posX="8" gridWidth="6" tabIndex="10"/>
+    <Button name="n_9" width="6" text="9" posY="8" posX="15" gridWidth="6" tabIndex="11"/>
+    <Button name="oper_add" width="6" text="+" posY="8" posX="22" gridWidth="6" tabIndex="12"/>
+    <Button name="oper_sub" width="6" text="-" posY="8" posX="29" gridWidth="6" tabIndex="13"/>
+    <Button name="oper_mul" width="6" text="*" posY="8" posX="36" gridWidth="6" tabIndex="14"/>
+    <Button name="n_4" width="6" text="4" posY="9" posX="1" gridWidth="6" tabIndex="15"/>
+    <Button name="n_5" width="6" text="5" posY="9" posX="8" gridWidth="6" tabIndex="16"/>
+    <Button name="n_6" width="6" text="6" posY="9" posX="15" gridWidth="6" tabIndex="17"/>
+    <Button name="oper_div" width="6" text="/" posY="9" posX="22" gridWidth="6" tabIndex="18"/>
+    <Button name="oper_exp" width="6" text="**" posY="9" posX="29" gridWidth="6" tabIndex="19"/>
+    <Button name="clear" width="6" text="Clear" posY="9" posX="36" gridWidth="6" tabIndex="20"/>
+    <Button name="n_1" width="6" text="1" posY="10" posX="1" gridWidth="6" tabIndex="21"/>
+    <Button name="n_2" width="6" text="2" posY="10" posX="8" gridWidth="6" tabIndex="22"/>
+    <Button name="n_3" width="6" text="3" posY="10" posX="15" gridWidth="6" tabIndex="23"/>
+    <Button name="oper_cbr" width="6" text=")" posY="10" posX="22" gridWidth="6" tabIndex="24"/>
+    <Button name="b_001" width="6" text="" posY="10" posX="29" gridWidth="6" tabIndex="25"/>
+    <Button name="b_002" width="6" text="" posY="10" posX="36" gridWidth="6" tabIndex="26"/>
+    <Button name="n_0" width="6" text="0" posY="11" posX="1" gridWidth="6" tabIndex="27"/>
+    <Button name="n_dot" width="6" text="." posY="11" posX="8" gridWidth="6" tabIndex="28"/>
+    <Button name="b_003" width="6" text="" posY="11" posX="15" gridWidth="6" tabIndex="29"/>
+    <Button name="oper_and" width="6" text="and" posY="11" posX="22" gridWidth="6" tabIndex="30"/>
+    <Button name="oper_or" width="6" text="or" posY="11" posX="29" gridWidth="6" tabIndex="31"/>
+    <Button name="oper_not" width="6" text="not" posY="11" posX="36" gridWidth="6" tabIndex="32"/>
+    <Button name="f_sin" width="6" text="sin()" posY="12" posX="1" gridWidth="6" tabIndex="33"/>
+    <Button name="f_asin" width="6" text="asin()" posY="12" posX="8" gridWidth="6" tabIndex="34"/>
+    <Button name="f_cos" width="6" text="cos()" posY="12" posX="15" gridWidth="6" tabIndex="35"/>
+    <Button name="f_acos" width="6" text="acos()" posY="12" posX="22" gridWidth="6" tabIndex="36"/>
+    <Button name="f_tan" width="6" text="tan()" posY="12" posX="29" gridWidth="6" tabIndex="37"/>
+    <Button name="f_atan" width="6" text="atan()" posY="12" posX="36" gridWidth="6" tabIndex="38"/>
+    <Button name="f_min" width="6" text="min()" posY="13" posX="1" gridWidth="6" tabIndex="39"/>
+    <Button name="f_max" width="6" text="max()" posY="13" posX="8" gridWidth="6" tabIndex="40"/>
+    <Button name="f_sqrt" width="6" text="sqrt()" posY="13" posX="15" gridWidth="6" tabIndex="41"/>
+    <Button name="f_exp" width="6" text="exp()" posY="13" posX="22" gridWidth="6" tabIndex="42"/>
+    <Button name="f_logn" width="6" text="logn()" posY="13" posX="29" gridWidth="6" tabIndex="43"/>
+    <Button name="f_mod" width="6" text="mod()" posY="13" posX="36" gridWidth="6" tabIndex="44"/>
+    <Button name="f_rand" width="6" text="rand()" posY="14" posX="1" gridWidth="6" tabIndex="45"/>
+    <Button name="f_rad" width="6" text="rad()" posY="14" posX="8" gridWidth="6" tabIndex="46"/>
+    <Button name="f_deg" width="6" text="deg()" posY="14" posX="15" gridWidth="6" tabIndex="47"/>
+    <Button name="f_iif" width="6" text="iif()" posY="14" posX="22" gridWidth="6" tabIndex="48"/>
+    <Button name="f_abs" width="6" text="abs()" posY="14" posX="29" gridWidth="6" tabIndex="49"/>
+    <Button name="b_004" width="6" text="" posY="14" posX="36" gridWidth="6" tabIndex="50"/>
+    <Button name="eval" width="41" text="Compute" posY="15" posX="1" gridWidth="41" tabIndex="51"/>
+    <Label text="Status:" posY="16" posX="0" gridWidth="8"/>
+    <FormField name="formonly.sta" colName="sta" fieldId="1" sqlTabName="formonly" tabIndex="52">
+      <Edit width="33" color="red" posY="16" posX="9" gridWidth="33"/>
+    </FormField>
+    <Label text="Message:" posY="17" posX="0" gridWidth="8"/>
+    <FormField name="formonly.msg" colName="msg" fieldId="2" sqlTabName="formonly" tabIndex="53">
+      <Edit width="33" color="red" scroll="1" posY="17" posX="9" gridWidth="33"/>
+    </FormField>
+    <Label text="Result:" posY="18" posX="0" gridWidth="8"/>
+    <FormField name="formonly.res" colName="res" fieldId="3" sqlTabName="formonly" tabIndex="54">
+      <Edit width="33" color="blue" scroll="1" posY="18" posX="9" gridWidth="33"/>
+    </FormField>
+  </Grid>
+  <RecordView tabName="formonly">
+    <Link colName="src" fieldIdRef="0"/>
+    <Link colName="sta" fieldIdRef="1"/>
+    <Link colName="msg" fieldIdRef="2"/>
+    <Link colName="res" fieldIdRef="3"/>
+    <Link colName="col_vn" fieldIdRef="4"/>
+    <Link colName="col_vv" fieldIdRef="5"/>
+    <Link colName="var_name" fieldIdRef="6"/>
+    <Link colName="var_value" fieldIdRef="7"/>
+  </RecordView>
+</Form>

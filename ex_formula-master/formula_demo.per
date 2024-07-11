@@ -1,0 +1,84 @@
+LAYOUT (STYLE="dialog4")
+GRID
+{
+[inp                                      ]<GROUP g1             >
+[                                         ] <TABLE t1           >
+[                                         ] [c1    |c2          ]
+[                                         ] [c1    |c2          ]
+[                                         ] [c1    |c2          ]
+[                                         ] [c1    |c2          ]
+[                                         ] [c1    |c2          ]
+[                                         ] [c1    |c2          ]
+[n_7   |n_8   |n_9   |b_add |b_sub |b_mul ] [c1    |c2          ]
+[n_4   |n_5   |n_6   |b_div |b_exp |b_cls ] [c1    |c2          ]
+[n_1   |n_2   |n_3   |b_cbr |b_001 |b_002 ] [c1    |c2          ]
+[n_0   |n_dot |b_003 |b_and |b_or  |b_not ] [c1    |c2          ]
+[f_sin |f_asin|f_cos |f_acos|f_tan |f_atan] [c1    |c2          ]
+[f_min |f_max |f_sqrt|f_exp |f_logn|f_mod ] [c1    |c2          ]
+[f_rand|f_rad |f_deg |f_iif |f_abs |b_004 ] [c1    |c2          ]
+[comp                                     ] <                   >
+Status: [sta                              ] [vn    ]=[vv        ]
+Message:[msg                              ] [cpre-:vset -:vclr -]
+Result: [res                              ]<                     >
+}
+END
+ATTRIBUTES
+TEXTEDIT inp = FORMONLY.src, STRETCH=BOTH, WANTNORETURNS;
+BUTTON n_0: n_0, TEXT="0";
+BUTTON n_1: n_1, TEXT="1";
+BUTTON n_2: n_2, TEXT="2";
+BUTTON n_3: n_3, TEXT="3";
+BUTTON n_4: n_4, TEXT="4";
+BUTTON n_5: n_5, TEXT="5";
+BUTTON n_6: n_6, TEXT="6";
+BUTTON n_7: n_7, TEXT="7";
+BUTTON n_8: n_8, TEXT="8";
+BUTTON n_9: n_9, TEXT="9";
+BUTTON n_dot: n_dot, TEXT=".";
+BUTTON b_add: oper_add, TEXT="+";
+BUTTON b_sub: oper_sub, TEXT="-";
+BUTTON b_mul: oper_mul, TEXT="*";
+BUTTON b_div: oper_div, TEXT="/";
+BUTTON b_exp: oper_exp, TEXT="**";
+BUTTON b_cbr: oper_cbr, TEXT=")";
+BUTTON b_and: oper_and, TEXT="and";
+BUTTON b_or : oper_or , TEXT="or";
+BUTTON b_not: oper_not, TEXT="not";
+BUTTON b_cls: clear, TEXT="Clear";
+BUTTON f_sin : f_sin , TEXT="sin()";
+BUTTON f_asin: f_asin, TEXT="asin()";
+BUTTON f_cos : f_cos , TEXT="cos()";
+BUTTON f_acos: f_acos, TEXT="acos()";
+BUTTON f_tan : f_tan , TEXT="tan()";
+BUTTON f_atan: f_atan, TEXT="atan()";
+BUTTON f_min : f_min , TEXT="min()";
+BUTTON f_max : f_max , TEXT="max()";
+BUTTON f_sqrt: f_sqrt, TEXT="sqrt()";
+BUTTON f_exp : f_exp , TEXT="exp()";
+BUTTON f_logn: f_logn, TEXT="logn()";
+BUTTON f_mod : f_mod , TEXT="mod()";
+BUTTON f_rand: f_rand ,TEXT="rand()";
+BUTTON f_rad : f_rad , TEXT="rad()";
+BUTTON f_deg : f_deg , TEXT="deg()";
+BUTTON f_iif : f_iif , TEXT="iif()";
+BUTTON f_abs : f_abs , TEXT="abs()";
+BUTTON b_001 : b_001 , TEXT="";
+BUTTON b_002 : b_002 , TEXT="";
+BUTTON b_003 : b_003 , TEXT="";
+BUTTON b_004 : b_004 , TEXT="";
+BUTTON comp: eval, TEXT="Compute";
+EDIT sta = FORMONLY.sta, COLOR=RED;
+EDIT msg = FORMONLY.msg, COLOR=RED, SCROLL;
+EDIT res = FORMONLY.res, COLOR=BLUE, SCROLL;
+GROUP g1: group1, TEXT="Variables";
+c1 = FORMONLY.col_vn, TITLE="Name", SCROLL;
+c2 = FORMONLY.col_vv, TITLE="Value", SCROLL;
+EDIT vn = FORMONLY.var_name, SCROLL;
+EDIT vv = FORMONLY.var_value, SCROLL;
+BUTTON cpre: copy_result, TEXT="CpRes";
+BUTTON vset: set_variable, TEXT="Set";
+BUTTON vclr: clr_variable, TEXT="Clear";
+END
+INSTRUCTIONS
+SCREEN RECORD sr(FORMONLY.col_vn,FORMONLY.col_vv);
+END
